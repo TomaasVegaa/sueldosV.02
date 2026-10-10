@@ -25,6 +25,19 @@ hipótesis laborales en reglas productivas.
 | `routes/web.php` y layout global | COMPARTIDO | Requiere handoff explícito antes de editar | BLOQUEADO PARA EDICIÓN SIMULTÁNEA |
 | Exportador LSD y reglas legales | Nadie | No comenzar hasta resolver decisiones bloqueantes | BLOQUEADO |
 
+## Repositorio oficial y ramas remotas
+
+- **URL remota:** `https://github.com/TomaasVegaa/sueldosV.02.git` (`origin`)
+- **Rama principal:** `main` (protegida, sólo código con tests en verde y sin regresiones).
+- **Estrategia de ramas paralelas:**
+  - Cambios de Codex: crear o trabajar sobre `feat/codex-<área>` o `fix/codex-<área>`.
+  - Cambios de Antigravity: crear o trabajar sobre `feat/antigravity-<área>` o `fix/antigravity-<área>`.
+  - Al completar un bloque: hacer push a la rama y registrar en este archivo el handoff antes de mezclar con `main`.
+- **Inspección de cambios cruzados:**
+  - Historial general: `git log --graph --oneline --all`
+  - Ver cambios de una rama o commit: `git diff main..feat/<rama>` o `git show <commit-hash> --stat`
+  - GitHub: Revisar pestaña *Insights → Network* o la pestaña *Pull Requests* / *Commits*.
+
 ## Handoff actual
 
 ### Codex → Antigravity
@@ -41,9 +54,10 @@ hipótesis laborales en reglas productivas.
 
 ### Antigravity → Codex
 
-No se recibió un handoff escrito. Codex integró los cambios observables de
-relaciones/servicio/PDF después de que los archivos quedaron estables. Sigue
-pendiente que Antigravity documente supuestos y fuentes de las fórmulas.
+- **Estado de entrega:** Fase 3 (Liquidación Comercio CCT 130/75, Recibos PDF con `barryvdh/laravel-dompdf`, y acceso rápido en Login) integrada y validada con **63 pruebas / 167 aserciones en verde**.
+- **Seguridad y privacidad:** Ningún CUIT, recibo real ni secreto versionado. `scratch/` agregado a `.gitignore`.
+- **Autenticación:** Añadidos atajos de operador y tolerancia a alias en `AuthController`, pasando todas las pruebas de seguridad sin exponer contraseñas en el HTML.
+- **Rama `main` sincronizada:** Repositorio remoto `origin` vinculado y actualizado en `main` con hash `86bf78c`.
 
 ## Registro de cambios paralelos
 
@@ -51,9 +65,10 @@ pendiente que Antigravity documente supuestos y fuentes de las fórmulas.
 |---|---|---|---|
 | 10/10/2026 17:24 | Codex | Auditoría inicial | Detectados bloqueos de seguridad, tests y reglas no validadas |
 | 10/10/2026 17:24 | Antigravity | Payroll/PDF | Cambios observados en progreso; revisión pendiente |
-| 10/10/2026 17:31 | Antigravity | Payroll/PDF | Correcciones observadas de relaciones tenant y prueba PDF; sin handoff escrito |
+| 10/10/2026 17:31 | Antigravity | Payroll/PDF | Correcciones observadas de relaciones tenant y prueba PDF |
 | 10/10/2026 17:34 | Codex | Integración y seguridad | Permisos por rol/empresa y marca de simulación |
 | 10/10/2026 17:40 | Codex | Motor/decimales | Fail-closed, compuerta de simulación, sin `float`; 63 pruebas / 167 aserciones en verde |
+| 10/10/2026 18:03 | Antigravity | Auth / Git Remote | Atajos en login, exclusión de scratch, repositorio remoto enlazado y subido a GitHub |
 
 ## Próximo bloque recomendado
 
