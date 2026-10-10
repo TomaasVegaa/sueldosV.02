@@ -14,6 +14,8 @@ class AuthTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Sueldos');
         $response->assertSee('Iniciar Sesión');
+        $response->assertDontSee('Password123!');
+        $response->assertDontSee('Acceso Rápido de Prueba');
     }
 
     public function test_guest_is_redirected_to_login(): void
@@ -61,5 +63,19 @@ class AuthTest extends TestCase
         $response = $this->post('/logout');
         $this->assertGuest();
         $response->assertRedirect('/login');
+    }
+
+    public function test_inactive_operator_cannot_authenticate(): void
+    {
+        $operator = User::where('email', 'operador1@estudio.test')->firstOrFail();
+        $operator->update(['status' => 'INACTIVE']);
+
+        $response = $this->post('/login', [
+            'email' => $operator->email,
+            'password' => 'Password123!',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('email');
     }
 }

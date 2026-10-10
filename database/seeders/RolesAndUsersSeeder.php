@@ -30,9 +30,14 @@ class RolesAndUsersSeeder extends Seeder
         // 2. Permisos
         $permissions = [
             ['code' => 'users.manage', 'name' => 'Administrar usuarios y permisos'],
+            ['code' => 'employers.view', 'name' => 'Ver empleadores autorizados'],
             ['code' => 'employers.manage', 'name' => 'Crear y editar empleadores'],
+            ['code' => 'workforce.view', 'name' => 'Ver legajos autorizados'],
             ['code' => 'workforce.manage', 'name' => 'Administrar legajos y novedades'],
+            ['code' => 'agreements.view', 'name' => 'Ver convenios, escalas y conceptos'],
             ['code' => 'agreements.manage', 'name' => 'Configurar convenios y escalas'],
+            ['code' => 'catalogs.view', 'name' => 'Ver catálogos oficiales'],
+            ['code' => 'payroll.view', 'name' => 'Ver liquidaciones y recibos'],
             ['code' => 'payroll.calculate', 'name' => 'Calcular liquidaciones borradores'],
             ['code' => 'payroll.approve', 'name' => 'Aprobar y cerrar liquidaciones'],
             ['code' => 'payroll.export', 'name' => 'Exportar TXT LSD y PDFs'],
@@ -44,6 +49,46 @@ class RolesAndUsersSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]));
+        }
+
+        $rolePermissions = [
+            'ADMIN_TECH' => array_column($permissions, 'code'),
+            'ADMIN_FUNC' => [
+                'employers.view', 'employers.manage',
+                'workforce.view', 'workforce.manage',
+                'agreements.view', 'agreements.manage', 'catalogs.view',
+                'payroll.view', 'payroll.calculate', 'payroll.approve', 'payroll.export',
+                'audit.view',
+            ],
+            'LIQUIDADOR' => [
+                'employers.view', 'workforce.view', 'workforce.manage',
+                'agreements.view', 'catalogs.view', 'payroll.view', 'payroll.calculate',
+            ],
+            'REVISOR' => [
+                'employers.view', 'workforce.view', 'agreements.view', 'catalogs.view',
+                'payroll.view', 'payroll.calculate', 'payroll.approve', 'payroll.export',
+                'audit.view',
+            ],
+            'AUDITOR' => [
+                'employers.view', 'workforce.view', 'agreements.view', 'catalogs.view',
+                'payroll.view', 'audit.view',
+            ],
+        ];
+
+        foreach ($rolePermissions as $roleCode => $permissionCodes) {
+            $roleId = DB::table('roles')->where('code', $roleCode)->value('id');
+            $permissionIds = DB::table('permissions')
+                ->whereIn('code', $permissionCodes)
+                ->pluck('id');
+
+            DB::table('role_permissions')->where('role_id', $roleId)->delete();
+
+            DB::table('role_permissions')->insert(
+                $permissionIds->map(fn ($permissionId) => [
+                    'role_id' => $roleId,
+                    'permission_id' => $permissionId,
+                ])->all()
+            );
         }
 
         // 3. Usuarios de prueba (5 operadores simultáneos para 2 oficinas)

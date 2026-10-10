@@ -3,6 +3,7 @@
 namespace App\Domain\Tenant;
 
 use App\Models\Employer;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -19,18 +20,28 @@ class EmployerContext
             return static::$overrideEmployerId;
         }
 
+        if (!Auth::check()) {
+            return null;
+        }
+
+        $user = Auth::user();
+
         if (Session::has('active_employer_id')) {
-            return (int) Session::get('active_employer_id');
+            $employerId = (int) Session::get('active_employer_id');
+
+            if ($user->accessibleEmployers()->contains('id', $employerId)) {
+                return $employerId;
+            }
+
+            Session::forget('active_employer_id');
         }
 
         // Auto-select first accessible employer if user is logged in
-        if (Auth::check()) {
-            $user = Auth::user();
-            $first = $user->accessibleEmployers()->first();
-            if ($first) {
-                static::setActiveEmployerId($first->id);
-                return $first->id;
-            }
+        $first = $user->accessibleEmployers()->first();
+        if ($first) {
+            Session::put('active_employer_id', $first->id);
+
+            return $first->id;
         }
 
         return null;
@@ -44,6 +55,10 @@ class EmployerContext
         if ($employerId === null) {
             Session::forget('active_employer_id');
         } else {
+            if (!Auth::check() || !Auth::user()->accessibleEmployers()->contains('id', $employerId)) {
+                throw new AuthorizationException('No tiene acceso al empleador solicitado.');
+            }
+
             Session::put('active_employer_id', $employerId);
         }
     }

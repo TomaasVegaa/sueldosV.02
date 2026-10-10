@@ -7,6 +7,9 @@ use App\Models\AuditEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -16,8 +19,7 @@ class AuthController extends Controller
             return redirect()->route('employers.index');
         }
 
-        $operators = User::where('status', 'ACTIVE')->get();
-        return view('auth.login', compact('operators'));
+        return view('auth.login');
     }
 
     public function login(Request $request)
@@ -27,7 +29,20 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        $throttleKey = 'login:'.Str::lower($credentials['email']).'|'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => "Demasiados intentos. Espere {$seconds} segundos antes de volver a intentar.",
+            ]);
+        }
+
+        $credentials['status'] = 'ACTIVE';
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
 
             /** @var User $user */
@@ -47,6 +62,8 @@ class AuthController extends Controller
 
             return redirect()->intended(route('employers.index'));
         }
+
+        RateLimiter::hit($throttleKey, 60);
 
         return back()->withErrors([
             'email' => 'Las credenciales no coinciden con nuestros registros.',

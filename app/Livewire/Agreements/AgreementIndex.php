@@ -8,12 +8,15 @@ use App\Models\AgreementCategory;
 use App\Models\AuditEvent;
 use App\Models\CategoryScaleVersion;
 use App\Models\PayrollConcept;
+use App\Support\Authorization\AuthorizesPermissions;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class AgreementIndex extends Component
 {
+    use AuthorizesPermissions;
+
     public ?int $selectedAgreementId = null;
     public string $search = '';
     public string $activeTab = 'CATEGORIES'; // 'CATEGORIES' | 'CONCEPTS'
@@ -48,6 +51,7 @@ class AgreementIndex extends Component
 
     public function mount(): void
     {
+        $this->authorizeAnyPermission('agreements.view');
         $first = Agreement::active()->first();
         if ($first) {
             $this->selectedAgreementId = $first->id;
@@ -71,6 +75,7 @@ class AgreementIndex extends Component
 
     public function openCreateCategoryModal(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->reset([
             'editingCategoryId', 'category_code', 'category_name',
             'basic_salary', 'non_taxable_salary', 'notes'
@@ -83,6 +88,7 @@ class AgreementIndex extends Component
 
     public function openEditCategoryModal(int $categoryId): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $cat = AgreementCategory::with('currentScale', 'latestScale')->findOrFail($categoryId);
         $this->editingCategoryId = $cat->id;
         $this->category_code = $cat->code;
@@ -101,6 +107,7 @@ class AgreementIndex extends Component
 
     public function saveCategory(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->validate([
             'category_code' => ['required', 'string', 'max:10'],
             'category_name' => ['required', 'string', 'max:100'],
@@ -173,6 +180,7 @@ class AgreementIndex extends Component
 
     public function openCreateConceptModal(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->reset([
             'editingConceptId', 'concept_code', 'concept_name',
             'concept_arca_lsd_code'
@@ -188,6 +196,7 @@ class AgreementIndex extends Component
 
     public function openEditConceptModal(int $conceptId): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $concept = PayrollConcept::findOrFail($conceptId);
         $this->editingConceptId = $concept->id;
         $this->concept_code = $concept->code;
@@ -204,6 +213,7 @@ class AgreementIndex extends Component
 
     public function saveConcept(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->validate([
             'concept_code' => ['required', 'string', 'max:10'],
             'concept_name' => ['required', 'string', 'max:150'],
@@ -264,6 +274,7 @@ class AgreementIndex extends Component
 
     public function openCreateAgreementModal(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->reset(['new_agreement_code', 'new_agreement_name', 'new_agreement_description']);
         $this->resetValidation();
         $this->showAgreementModal = true;
@@ -271,6 +282,7 @@ class AgreementIndex extends Component
 
     public function saveAgreement(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->validate([
             'new_agreement_code' => ['required', 'string', 'max:10', 'unique:agreements,code'],
             'new_agreement_name' => ['required', 'string', 'max:150'],
@@ -292,6 +304,7 @@ class AgreementIndex extends Component
 
     public function render()
     {
+        $this->authorizeAnyPermission('agreements.view');
         $agreements = Agreement::active()->withCount('categories')->get();
         $selectedAgreement = $this->selectedAgreementId ? Agreement::find($this->selectedAgreementId) : null;
 

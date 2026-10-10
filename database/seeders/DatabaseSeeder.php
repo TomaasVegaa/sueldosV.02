@@ -9,8 +9,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            ArcaCatalogsSeeder::class,
             RolesAndUsersSeeder::class,
+            ArcaCatalogsSeeder::class,
+            AgreementsAndScalesSeeder::class,
             EmployersAndWorkforceSeeder::class,
             GlobalConceptsSeeder::class,
         ]);

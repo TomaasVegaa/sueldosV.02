@@ -3,15 +3,21 @@
 namespace App\Livewire\Arca;
 
 use App\Models\ArcaCatalog;
+use App\Support\Authorization\AuthorizesPermissions;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class CatalogViewer extends Component
 {
-    use WithPagination;
+    use AuthorizesPermissions, WithPagination;
 
     public string $typeFilter = 'OBRA_SOCIAL';
     public string $search = '';
+
+    public function mount(): void
+    {
+        $this->authorizeAnyPermission('catalogs.view');
+    }
 
     public function setType(string $type): void
     {
@@ -21,6 +27,7 @@ class CatalogViewer extends Component
 
     public function render()
     {
+        $this->authorizeAnyPermission('catalogs.view');
         $query = ArcaCatalog::ofType($this->typeFilter);
 
         if (!empty($this->search)) {

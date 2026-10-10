@@ -42,16 +42,13 @@
 
                 <div>
                     <label for="email" class="block text-xs font-medium text-slate-700 mb-1">Correo electrónico</label>
-                    <input type="email" id="email" name="email" value="{{ old('email', 'admin@estudio.test') }}" required autofocus
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" autocomplete="username" required autofocus
                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition">
                 </div>
 
                 <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label for="password" class="block text-xs font-medium text-slate-700">Contraseña</label>
-                        <span class="text-[11px] text-slate-400">Predeterminada: Password123!</span>
-                    </div>
-                    <input type="password" id="password" name="password" value="Password123!" required
+                    <label for="password" class="block text-xs font-medium text-slate-700 mb-1">Contraseña</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required
                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition">
                 </div>
 
@@ -66,24 +63,10 @@
                 </button>
             </form>
 
-            <!-- Quick Operator Switcher for Local Testing -->
-            <div class="mt-8 pt-6 border-t border-slate-100">
-                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-3">Acceso Rápido de Prueba (5 Operadores):</span>
-                <div class="grid grid-cols-1 gap-1.5 text-xs">
-                    @foreach ($operators as $op)
-                        <button type="button" 
-                                onclick="document.getElementById('email').value='{{ $op->email }}'; document.getElementById('password').value='Password123!';"
-                                class="text-left px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-700 transition flex items-center justify-between">
-                            <span class="font-medium truncate">{{ $op->name }}</span>
-                            <span class="text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">{{ $op->office ?? 'Estudio' }}</span>
-                        </button>
-                    @endforeach
-                </div>
-            </div>
         </div>
 
         <p class="text-center text-xs text-slate-500 mt-6">
-            &copy; {{ date('Y') }} Sueldos Web • Aislamiento Estricto por CUIT
+            &copy; {{ date('Y') }} Sueldos Web • Uso interno autorizado
         </p>
     </div>
 </body>

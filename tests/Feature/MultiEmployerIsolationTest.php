@@ -6,18 +6,18 @@ use App\Domain\Tenant\EmployerContext;
 use App\Models\AuditEvent;
 use App\Models\Employer;
 use App\Models\Employment;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\Worker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Auth\Access\AuthorizationException;
 use Tests\TestCase;
 
 class MultiEmployerIsolationTest extends TestCase
 {
-    // Do not use RefreshDatabase on MySQL directly so we keep seeded database,
-    // or test against SQLite in-memory if available. Let's inspect test environment.
-    
     public function test_multi_employer_scope_filters_records_by_active_employer(): void
     {
+        $this->actingAs(User::where('email', 'admin@estudio.test')->firstOrFail());
+
         $emp1 = Employer::where('cuit', '30718096045')->first();
         $emp2 = Employer::where('cuit', '30654321098')->first();
 
@@ -85,6 +85,9 @@ class MultiEmployerIsolationTest extends TestCase
         $employment = Employment::withoutGlobalScopes()->first();
         $this->assertNotNull($employment);
 
+        $this->actingAs(User::where('email', 'admin@estudio.test')->firstOrFail());
+        EmployerContext::setActiveEmployerId($employment->employer_id);
+
         $version = $employment->getVersionOn('2026-02-01');
         $this->assertNotNull($version);
         $this->assertEquals('003', $version->agreement_code);
@@ -96,5 +99,31 @@ class MultiEmployerIsolationTest extends TestCase
         $this->assertNotNull($operator);
         $employers = $operator->accessibleEmployers();
         $this->assertGreaterThanOrEqual(2, $employers->count());
+    }
+
+    public function test_tenant_models_fail_closed_without_authenticated_context(): void
+    {
+        $this->assertSame(0, Employment::count());
+    }
+
+    public function test_operator_cannot_activate_an_unassigned_employer(): void
+    {
+        $employers = Employer::orderBy('id')->get();
+        $allowedEmployer = $employers->firstOrFail();
+        $forbiddenEmployer = $employers->skip(1)->firstOrFail();
+
+        $operator = User::factory()->create([
+            'email' => 'limitado@estudio.test',
+            'status' => 'ACTIVE',
+        ]);
+        $role = Role::where('code', 'LIQUIDADOR')->firstOrFail();
+        $operator->roles()->attach($role->id, ['employer_id' => $allowedEmployer->id]);
+
+        $this->actingAs($operator);
+        EmployerContext::setActiveEmployerId($allowedEmployer->id);
+        $this->assertSame($allowedEmployer->id, EmployerContext::getActiveEmployerId());
+
+        $this->expectException(AuthorizationException::class);
+        EmployerContext::setActiveEmployerId($forbiddenEmployer->id);
     }
 }

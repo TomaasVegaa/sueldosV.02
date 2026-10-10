@@ -3,19 +3,31 @@
 namespace App\Livewire\Audit;
 
 use App\Models\AuditEvent;
+use App\Support\Authorization\AuthorizesPermissions;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class AuditLogViewer extends Component
 {
-    use WithPagination;
+    use AuthorizesPermissions, WithPagination;
 
     public string $actionFilter = 'ALL';
     public string $search = '';
 
+    public function mount(): void
+    {
+        $this->authorizeAnyPermission('audit.view');
+    }
+
     public function render()
     {
+        $this->authorizeAnyPermission('audit.view');
         $query = AuditEvent::with(['user', 'employer'])->orderByDesc('created_at');
+
+        if (!Auth::user()->isSuperAdmin()) {
+            $query->whereIn('employer_id', Auth::user()->accessibleEmployers()->pluck('id'));
+        }
 
         if ($this->actionFilter !== 'ALL') {
             $query->where('action', $this->actionFilter);

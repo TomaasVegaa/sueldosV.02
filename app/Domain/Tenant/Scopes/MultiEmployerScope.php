@@ -15,6 +15,12 @@ class MultiEmployerScope implements Scope
 
         if ($employerId !== null) {
             $builder->where($model->qualifyColumn('employer_id'), $employerId);
+
+            return;
         }
+
+        // Fail closed: a tenant-owned model is never visible without an
+        // authenticated and authorized employer context.
+        $builder->whereRaw('1 = 0');
     }
 }

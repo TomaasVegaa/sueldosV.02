@@ -22,16 +22,16 @@ class HeaderEmployerSelector extends Component
         $user = Auth::user();
         $accessible = $user ? $user->accessibleEmployers()->pluck('id')->toArray() : [];
 
-        if (in_array($employerId, $accessible) || ($user && $user->isSuperAdmin())) {
-            $prev = EmployerContext::getActiveEmployerId();
-            EmployerContext::setActiveEmployerId($employerId);
-            $this->selectedEmployerId = $employerId;
+        abort_unless($user && in_array($employerId, $accessible, true), 403);
 
-            $emp = Employer::find($employerId);
-            AuditEvent::record('SWITCH_TENANT', 'Employer', $employerId, ['previous' => $prev], ['new' => $employerId], "Operador cambió contexto a {$emp?->legal_name}");
+        $prev = EmployerContext::getActiveEmployerId();
+        EmployerContext::setActiveEmployerId($employerId);
+        $this->selectedEmployerId = $employerId;
 
-            $this->redirect(request()->header('Referer', route('employers.index')));
-        }
+        $emp = Employer::find($employerId);
+        AuditEvent::record('SWITCH_TENANT', 'Employer', $employerId, ['previous' => $prev], ['new' => $employerId], "Operador cambió contexto a {$emp?->legal_name}");
+
+        $this->redirect(request()->header('Referer', route('employers.index')));
     }
 
     public function render()

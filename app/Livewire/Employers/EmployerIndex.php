@@ -6,13 +6,14 @@ use App\Domain\Tenant\EmployerContext;
 use App\Models\AuditEvent;
 use App\Models\Employer;
 use App\Models\EmployerSettingsVersion;
+use App\Support\Authorization\AuthorizesPermissions;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class EmployerIndex extends Component
 {
-    use WithPagination;
+    use AuthorizesPermissions, WithPagination;
 
     public string $search = '';
     public string $statusFilter = 'ALL';
@@ -26,6 +27,11 @@ class EmployerIndex extends Component
     public string $payment_place = 'San Miguel de Tucumán';
     public string $contribution_bank = 'Banco Macro S.A.';
     public string $notes = '';
+
+    public function mount(): void
+    {
+        $this->authorizeAnyPermission('employers.view');
+    }
 
     protected function rules(): array
     {
@@ -45,6 +51,7 @@ class EmployerIndex extends Component
 
     public function openCreateModal(): void
     {
+        $this->authorizeGlobalPermission('employers.manage');
         $this->reset(['cuit', 'legal_name', 'notes', 'editingEmployerId']);
         $this->status = 'ACTIVE';
         $this->payment_place = 'San Miguel de Tucumán';
@@ -55,6 +62,7 @@ class EmployerIndex extends Component
 
     public function openEditModal(int $id): void
     {
+        $this->authorizeEmployerPermission('employers.manage', $id);
         $employer = Employer::with('currentSettings')->findOrFail($id);
         $this->editingEmployerId = $employer->id;
         $this->cuit = $employer->formatted_cuit;
@@ -77,6 +85,7 @@ class EmployerIndex extends Component
         $cleanCuit = preg_replace('/\D/', '', $this->cuit);
 
         if ($this->editingEmployerId) {
+            $this->authorizeEmployerPermission('employers.manage', $this->editingEmployerId);
             $employer = Employer::findOrFail($this->editingEmployerId);
             $oldValues = $employer->toArray();
 
@@ -100,6 +109,7 @@ class EmployerIndex extends Component
             AuditEvent::record('UPDATE', 'Employer', $employer->id, $oldValues, $employer->toArray(), 'Edición de empresa y parámetros');
             session()->flash('success', "Empresa {$employer->legal_name} actualizada con éxito.");
         } else {
+            $this->authorizeGlobalPermission('employers.manage');
             // Check unique CUIT
             if (Employer::where('cuit', $cleanCuit)->exists()) {
                 $this->addError('cuit', 'Ya existe una empresa registrada con este CUIT.');
@@ -130,6 +140,7 @@ class EmployerIndex extends Component
 
     public function activateEmployer(int $id): void
     {
+        $this->authorizeEmployerPermission('employers.view', $id);
         $employer = Employer::findOrFail($id);
         EmployerContext::setActiveEmployerId($employer->id);
 
@@ -140,8 +151,14 @@ class EmployerIndex extends Component
 
     public function render()
     {
-        $query = Employer::with(['currentSettings', 'employments'])
-            ->withCount(['employments' => fn ($q) => $q->where('status', 'ACTIVE')]);
+        $this->authorizeAnyPermission('employers.view');
+
+        $accessibleIds = Auth::user()->accessibleEmployers()->pluck('id');
+        $query = Employer::with('currentSettings')
+            ->whereIn('id', $accessibleIds)
+            ->withCount(['employments' => fn ($q) => $q
+                ->withoutGlobalScopes()
+                ->where('status', 'ACTIVE')]);
 
         if (!empty($this->search)) {
             $cleanSearch = preg_replace('/\D/', '', $this->search);

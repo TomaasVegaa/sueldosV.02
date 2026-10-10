@@ -6,13 +6,11 @@ use App\Domain\Payroll\Engine\ExpressionEvaluator;
 use App\Livewire\Concepts\ConceptIndex;
 use App\Models\PayrollConcept;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class GlobalConceptsTest extends TestCase
 {
-    use DatabaseTransactions;
     /** @test */
     public function global_concepts_page_can_be_rendered(): void
     {

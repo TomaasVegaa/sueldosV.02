@@ -6,6 +6,7 @@ use App\Domain\Payroll\Engine\ExpressionEvaluator;
 use App\Domain\Payroll\Engine\Parser;
 use App\Models\AuditEvent;
 use App\Models\PayrollConcept;
+use App\Support\Authorization\AuthorizesPermissions;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -13,7 +14,7 @@ use Livewire\WithPagination;
 
 class ConceptIndex extends Component
 {
-    use WithPagination;
+    use AuthorizesPermissions, WithPagination;
 
     public string $search = '';
     public string $typeFilter = 'ALL'; // ALL | REMUNERATIVO | NO_REMUNERATIVO | DESCUENTO
@@ -54,6 +55,11 @@ class ConceptIndex extends Component
         'typeFilter' => ['except' => 'ALL'],
     ];
 
+    public function mount(): void
+    {
+        $this->authorizeAnyPermission('agreements.view');
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -66,6 +72,7 @@ class ConceptIndex extends Component
 
     public function openCreateModal(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->resetErrorBag();
         $this->editingConceptId = null;
         $this->code = '';
@@ -91,6 +98,7 @@ class ConceptIndex extends Component
 
     public function editConcept(int $id): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->resetErrorBag();
         $concept = PayrollConcept::findOrFail($id);
 
@@ -152,6 +160,7 @@ class ConceptIndex extends Component
 
     public function saveConcept(): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $this->validate([
             'code' => ['required', 'string', 'max:10'],
             'name' => ['required', 'string', 'max:150'],
@@ -219,6 +228,7 @@ class ConceptIndex extends Component
 
     public function toggleStatus(int $id): void
     {
+        $this->authorizeGlobalPermission('agreements.manage');
         $concept = PayrollConcept::findOrFail($id);
         $newStatus = $concept->status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
         $concept->update(['status' => $newStatus]);
@@ -236,6 +246,7 @@ class ConceptIndex extends Component
 
     public function render()
     {
+        $this->authorizeAnyPermission('agreements.view');
         $query = PayrollConcept::global();
 
         if (!empty($this->search)) {

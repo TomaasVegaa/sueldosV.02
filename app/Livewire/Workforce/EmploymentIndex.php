@@ -10,12 +10,13 @@ use App\Models\AuditEvent;
 use App\Models\Employment;
 use App\Models\EmploymentVersion;
 use App\Models\Worker;
+use App\Support\Authorization\AuthorizesPermissions;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class EmploymentIndex extends Component
 {
-    use WithPagination;
+    use AuthorizesPermissions, WithPagination;
 
     public string $search = '';
     public string $statusFilter = 'ACTIVE';
@@ -48,6 +49,11 @@ class EmploymentIndex extends Component
     public float $scale_basic = 0.0;
     public float $scale_non_taxable = 0.0;
     public float $suggested_basic = 0.0;
+
+    public function mount(): void
+    {
+        $this->authorizeAnyPermission('workforce.view');
+    }
 
     protected function rules(): array
     {
@@ -141,6 +147,7 @@ class EmploymentIndex extends Component
 
     public function openCreateModal(): void
     {
+        $this->authorizeEmployerPermission('workforce.manage');
         $this->reset([
             'editingEmploymentId', 'cuil', 'first_name', 'last_name',
             'file_number', 'cbu', 'agreed_salary'
@@ -161,6 +168,7 @@ class EmploymentIndex extends Component
 
     public function openEditModal(int $employmentId): void
     {
+        $this->authorizeEmployerPermission('workforce.manage');
         $employment = Employment::with(['worker', 'currentVersion'])->findOrFail($employmentId);
         $this->editingEmploymentId = $employment->id;
 
@@ -199,6 +207,8 @@ class EmploymentIndex extends Component
             session()->flash('error', 'Debe seleccionar una empresa activa primero.');
             return;
         }
+
+        $this->authorizeEmployerPermission('workforce.manage', $activeEmployerId);
 
         $cleanCuil = preg_replace('/\D/', '', $this->cuil);
 
@@ -274,6 +284,7 @@ class EmploymentIndex extends Component
 
     public function render()
     {
+        $this->authorizeEmployerPermission('workforce.view');
         $activeEmployer = EmployerContext::getActiveEmployer();
 
         $query = Employment::with(['worker', 'currentVersion'])

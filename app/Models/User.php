@@ -53,7 +53,7 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->userEmployerRoles()
-            ->whereHas('role', fn ($q) => $q->whereIn('code', ['SUPER_ADMIN', 'ADMIN_TECH', 'ADMIN_FUNC']))
+            ->whereHas('role', fn ($q) => $q->whereIn('code', ['SUPER_ADMIN', 'ADMIN_TECH']))
             ->exists();
     }
 
@@ -87,6 +87,17 @@ class User extends Authenticatable
                     $q->orWhere('employer_id', $employerId);
                 }
             })
+            ->whereHas('role.permissions', fn ($q) => $q->where('code', $permissionCode))
+            ->exists();
+    }
+
+    public function hasAnyPermission(string $permissionCode): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->userEmployerRoles()
             ->whereHas('role.permissions', fn ($q) => $q->where('code', $permissionCode))
             ->exists();
     }
