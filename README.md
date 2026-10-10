@@ -47,6 +47,10 @@ C:\xampp\php\php.exe artisan serve
 Las pruebas automatizadas deben usar una base aislada. Consultar
 `docs/estado-requisitos.md` antes de ejecutar la suite completa.
 
+El motor de liquidación no validado está deshabilitado por defecto. La variable
+`PAYROLL_UNVALIDATED_SIMULATION_ENABLED=true` sólo se admite localmente con datos
+ficticios; no convierte las reglas en correctas ni habilita uso real.
+
 ## Seguridad y privacidad
 
 - No versionar `.env`, PDFs, TXT de ARCA, DBF, videos, backups ni bases SQLite.

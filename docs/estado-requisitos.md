@@ -11,35 +11,60 @@ contable ni aceptación por ARCA.
 | Fase | Estado | Motivo principal |
 |---|---|---|
 | 0 — Descubrimiento y arquitectura | INCOMPLETA | Faltan evidencia Hostinger, comparación desplegada y cierre de decisiones PD-01 a PD-07 |
-| 1 — Seguridad y entidades base | NO ACEPTADA | RBAC no aplicado, tenant fail-open, concurrencia no probada y tests no aislados |
-| 2 — Motor de reglas | PARCIAL / BLOQUEADA | AST sólo aritmético; variables desconocidas valen cero; fórmulas sin aprobación |
-| 3 — Mensual Comercio y PDF | EN DESARROLLO / BLOQUEADA | Código en construcción; casos y reglas no aceptados por experto |
+| 1 — Seguridad y entidades base | PARCIAL / NO ACEPTADA | RBAC y tenant tienen regresiones en verde; faltan concurrencia real, vigencias y aceptación humana |
+| 2 — Motor de reglas | PARCIAL / BLOQUEADA | AST sólo aritmético y fail-closed; faltan funciones/tipos aprobados y las fórmulas no están validadas |
+| 3 — Mensual Comercio y PDF | PROTOTIPO / BLOQUEADA | UI y PDF funcionan como simulación; tasas, fórmulas, casos y recibo no fueron aceptados por experto |
 | 4 — ARCA LSD | NO INICIADA | Sin mapeos versionados por empleador ni serializador validado |
 | 5–6 | NO INICIADAS | Dependen de las compuertas anteriores |
 
-## Bloqueos prioritarios
+## Controles técnicos resueltos en esta iteración
 
-- **SEG-01:** aplicar permisos en servidor a rutas y acciones Livewire.
-- **SEG-02:** validar siempre la empresa activa contra las empresas autorizadas.
-- **SEG-03:** retirar usuarios/contraseña de demostración de la pantalla pública.
-- **PRV-01:** mantener fuera de Git PDFs, TXT, DBF, videos, bases y `.env`.
-- **TST-01:** ejecutar pruebas con SQLite en memoria o base MySQL exclusiva.
+- **SEG-01:** permisos en servidor aplicados a módulos existentes y acciones de
+  nómina/PDF, con pruebas negativas por rol y empleador.
+- **SEG-02:** empresa activa revalidada contra las empresas autorizadas y tenant
+  cerrado por defecto.
+- **SEG-03:** usuarios y contraseña de demostración retirados del login público;
+  usuario inactivo y rate limit contemplados en el controlador.
+- **PRV-01:** `.env`, PDFs, TXT, DBF, videos, ZIP y bases locales excluidos de Git.
+- **TST-01:** PHPUnit forzado a SQLite `:memory:` con migración y seed por prueba.
+
+## Bloqueos prioritarios abiertos
+
 - **DAT-01:** implementar vigencias sin solapamiento y semántica de fin exclusiva.
 - **CON-01:** bloqueo optimista real mediante comparación de `lock_version`.
-- **FOR-01:** no aceptar variables inexistentes; agregar condiciones y tipos.
-- **FOR-02:** eliminar `float` de importes y conversiones monetarias.
+- **FOR-01:** ampliar el AST con las funciones y tipos que se aprueben; las
+  variables y condiciones desconocidas ya fallan de forma cerrada.
+- **FOR-02:** control continuo: no reintroducir `float`/`number_format` en
+  importes. Servicio, sugerencias, conversión a letras y vistas usan decimales exactos.
 - **NEG-01:** validar diccionario, conceptos, escalas, porcentajes y redondeos con liquidador experto.
-- **ARQ-01:** completar evidencia de Hostinger y actualizar ADR a las versiones reales.
+- **NEG-02:** retirar tasas patronales hardcodeadas; modelarlas con fuente,
+  vigencia y aprobación antes de activarlas.
+- **NEG-03:** reparar el catálogo sembrado: hoy contiene fórmulas que referencian
+  conceptos ausentes para el conjunto aplicable (`LQ015`, `LQ324`, entre otros).
+  No convertir esas referencias a cero sin una decisión profesional.
+- **ARQ-01:** ejecutar los dos smoke tests en el plan Hostinger contratado y
+  obtener aprobación expresa del ADR.
+- **DEP-01:** incorporar PHPStan y una línea base revisada; `brick/math` ya es
+  dependencia directa y DomPDF quedó fijado a `^3.1`.
 
 ## Evidencia verificada
 
 - PHP 8.2.12, Laravel 12.69.3 y Livewire 4.4.7 cargan localmente.
-- Las rutas existentes responden bajo Laravel.
-- Los archivos PHP inspeccionados pasan `php -l`.
-- Seis pruebas unitarias del motor pasan; la cobertura funcional es todavía insuficiente.
-- La suite feature original apunta a `sueldos_db` y puede modificarla; no constituye evidencia reproducible.
-- `pint --test` detecta formato pendiente en numerosos archivos.
-- No había repositorio Git al comenzar esta intervención.
+- Composer 2.10.3 y los requisitos de plataforma instalados pasan localmente.
+- La suite completa pasa con **63 pruebas y 167 aserciones** sobre SQLite en memoria.
+- Hay regresiones de autenticación, permisos, aislamiento multiempresa y
+  denegación de PDFs entre empleadores.
+- Pantalla y PDFs de nómina muestran `SIMULACIÓN NO VALIDADA`.
+- El cálculo no validado está deshabilitado por defecto y sólo se activa en la
+  suite aislada mediante una variable explícita.
+- Las pruebas de liquidación usan conceptos sintéticos; el catálogo de Comercio
+  no se usa como oráculo de corrección.
+- `pint --test`, `composer validate --strict`, requisitos de plataforma y el
+  build de Vite pasan localmente.
+- Git quedó inicializado; los commits de línea base, seguridad y configuración
+  permiten revisar el trabajo incremental.
+- La documentación pública actual de Hostinger admite PHP y también Next.js en
+  Business, pero el plan concreto todavía no fue probado.
 
 ## Decisiones humanas aún necesarias
 
