@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 class GlobalConceptsTest extends TestCase
 {
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function global_concepts_page_can_be_rendered(): void
     {
         $user = User::first();
@@ -22,7 +22,7 @@ class GlobalConceptsTest extends TestCase
         $response->assertSee('Catálogo Global de Conceptos');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function concept_index_component_lists_global_concepts(): void
     {
         $user = User::first();
@@ -38,7 +38,7 @@ class GlobalConceptsTest extends TestCase
             ->assertSee('400');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function concept_can_be_created_and_applies_globally(): void
     {
         $user = User::first();
@@ -62,7 +62,7 @@ class GlobalConceptsTest extends TestCase
         $this->assertTrue($concept->is_global);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function formula_tester_evaluates_exact_amount(): void
     {
         $user = User::first();
