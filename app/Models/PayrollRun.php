@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PayrollRun extends Model
 {
-    use HasFactory, BelongsToEmployer;
+    use BelongsToEmployer, HasFactory;
 
     protected $fillable = [
         'employer_id',
@@ -35,7 +35,7 @@ class PayrollRun extends Model
 
     public function period(): BelongsTo
     {
-        return $this->belongsTo(PayrollPeriod::class, 'payroll_period_id');
+        return $this->belongsTo(PayrollPeriod::class, 'payroll_period_id')->withoutGlobalScopes();
     }
 
     public function versions(): HasMany

@@ -88,7 +88,7 @@
                             </td>
                             <td class="px-5 py-4 font-mono font-semibold text-slate-900">
                                 @if ($version?->agreed_salary)
-                                    ${{ number_format($version->agreed_salary, 2, ',', '.') }}
+                                    ${{ \App\Support\DecimalFormatter::format($version->agreed_salary) }}
                                 @else
                                     <span class="text-slate-400 font-normal">Escala CCT</span>
                                 @endif
@@ -239,15 +239,15 @@
                                         <span>{{ $category_name }}</span>
                                     </div>
                                     <div class="text-[11px] text-slate-600 flex items-center space-x-3">
-                                        <span>Básico: <strong class="font-mono text-slate-900">${{ number_format($scale_basic, 2, ',', '.') }}</strong></span>
+                                        <span>Básico: <strong class="font-mono text-slate-900">${{ \App\Support\DecimalFormatter::format($scale_basic) }}</strong></span>
                                         @if ($scale_non_taxable > 0)
-                                            <span>No Remun.: <strong class="font-mono text-emerald-700">${{ number_format($scale_non_taxable, 2, ',', '.') }}</strong></span>
+                                            <span>No Remun.: <strong class="font-mono text-emerald-700">${{ \App\Support\DecimalFormatter::format($scale_non_taxable) }}</strong></span>
                                         @endif
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">
                                     <span class="text-[10px] text-slate-500 block">Sugerido p/ Jornada:</span>
-                                    <span class="font-mono font-bold text-indigo-700 text-sm">${{ number_format($suggested_basic, 2, ',', '.') }}</span>
+                                    <span class="font-mono font-bold text-indigo-700 text-sm">${{ \App\Support\DecimalFormatter::format($suggested_basic) }}</span>
                                 </div>
                             </div>
 

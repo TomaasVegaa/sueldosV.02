@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain\Tenant\EmployerContext;
+use App\Livewire\Agreements\AgreementIndex;
 use App\Livewire\Arca\CatalogViewer;
 use App\Livewire\Audit\AuditLogViewer;
 use App\Livewire\Employers\EmployerIndex;
@@ -73,7 +74,7 @@ class LivewireComponentsTest extends TestCase
 
     public function test_agreements_index_renders_and_lists_categories_with_scales(): void
     {
-        Livewire::test(\App\Livewire\Agreements\AgreementIndex::class)
+        Livewire::test(AgreementIndex::class)
             ->assertSee('Convenios, Escalas y Fórmulas')
             ->assertSee('Comercio — CCT 130/75')
             ->assertSee('VENDEDOR B')

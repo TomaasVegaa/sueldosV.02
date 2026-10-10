@@ -99,9 +99,9 @@
                             @forelse ($categories as $cat)
                                 @php
                                     $scale = $cat->currentScale ?? $cat->latestScale;
-                                    $basic = (float) ($scale?->basic_salary ?? 0);
-                                    $nonTax = (float) ($scale?->non_taxable_salary ?? 0);
-                                    $total = $basic + $nonTax;
+                                    $basic = (string) ($scale?->basic_salary ?? '0.00');
+                                    $nonTax = (string) ($scale?->non_taxable_salary ?? '0.00');
+                                    $total = \App\Support\DecimalFormatter::sum([$basic, $nonTax]);
                                 @endphp
                                 <tr class="hover:bg-slate-50 transition">
                                     <td class="px-5 py-4 font-mono font-bold text-indigo-600">
@@ -116,17 +116,17 @@
                                         </span>
                                     </td>
                                     <td class="px-5 py-4 text-right font-mono font-semibold text-slate-900">
-                                        ${{ number_format($basic, 2, ',', '.') }}
+                                        ${{ \App\Support\DecimalFormatter::format($basic) }}
                                     </td>
                                     <td class="px-5 py-4 text-right font-mono font-medium text-emerald-700">
-                                        @if ($nonTax > 0)
-                                            ${{ number_format($nonTax, 2, ',', '.') }}
+                                        @if (\App\Support\DecimalFormatter::isPositive($nonTax))
+                                            ${{ \App\Support\DecimalFormatter::format($nonTax) }}
                                         @else
                                             <span class="text-slate-400 font-normal">$0,00</span>
                                         @endif
                                     </td>
                                     <td class="px-5 py-4 text-right font-mono font-bold text-indigo-900 bg-indigo-50/20">
-                                        ${{ number_format($total, 2, ',', '.') }}
+                                        ${{ \App\Support\DecimalFormatter::format($total) }}
                                     </td>
                                     <td class="px-5 py-4 text-slate-500 text-[11px]">
                                         {{ $scale?->effective_from ? $scale->effective_from->format('d/m/Y') : 'Inicial' }}

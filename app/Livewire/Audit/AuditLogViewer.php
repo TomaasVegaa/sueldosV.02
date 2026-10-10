@@ -13,6 +13,7 @@ class AuditLogViewer extends Component
     use AuthorizesPermissions, WithPagination;
 
     public string $actionFilter = 'ALL';
+
     public string $search = '';
 
     public function mount(): void
@@ -25,7 +26,7 @@ class AuditLogViewer extends Component
         $this->authorizeAnyPermission('audit.view');
         $query = AuditEvent::with(['user', 'employer'])->orderByDesc('created_at');
 
-        if (!Auth::user()->isSuperAdmin()) {
+        if (! Auth::user()->isSuperAdmin()) {
             $query->whereIn('employer_id', Auth::user()->accessibleEmployers()->pluck('id'));
         }
 
@@ -33,11 +34,11 @@ class AuditLogViewer extends Component
             $query->where('action', $this->actionFilter);
         }
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->where(function ($q) {
                 $q->where('reason', 'like', "%{$this->search}%")
-                  ->orWhere('entity_type', 'like', "%{$this->search}%")
-                  ->orWhere('ip_address', 'like', "%{$this->search}%");
+                    ->orWhere('entity_type', 'like', "%{$this->search}%")
+                    ->orWhere('ip_address', 'like', "%{$this->search}%");
             });
         }
 

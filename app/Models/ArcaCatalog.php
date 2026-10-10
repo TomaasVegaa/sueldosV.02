@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -34,6 +35,7 @@ class ArcaCatalog extends Model
     public function scopeActive(Builder $query): Builder
     {
         $today = now()->toDateString();
+
         return $query->where(function ($q) use ($today) {
             $q->whereNull('effective_from')->orWhere('effective_from', '<=', $today);
         })->where(function ($q) use ($today) {
@@ -41,17 +43,17 @@ class ArcaCatalog extends Model
         });
     }
 
-    public static function getObrasSociales(): \Illuminate\Database\Eloquent\Collection
+    public static function getObrasSociales(): Collection
     {
         return static::ofType('OBRA_SOCIAL')->orderBy('code')->get();
     }
 
-    public static function getModalidades(): \Illuminate\Database\Eloquent\Collection
+    public static function getModalidades(): Collection
     {
         return static::ofType('MODALIDAD')->orderBy('code')->get();
     }
 
-    public static function getSituaciones(): \Illuminate\Database\Eloquent\Collection
+    public static function getSituaciones(): Collection
     {
         return static::ofType('SIT_REVISTA')->orderBy('code')->get();
     }

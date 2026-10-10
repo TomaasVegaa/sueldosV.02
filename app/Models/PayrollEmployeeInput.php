@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PayrollEmployeeInput extends Model
 {
-    use HasFactory, BelongsToEmployer;
+    use BelongsToEmployer, HasFactory;
 
     protected $fillable = [
         'employer_id',

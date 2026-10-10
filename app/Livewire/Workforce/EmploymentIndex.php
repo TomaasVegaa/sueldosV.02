@@ -4,13 +4,14 @@ namespace App\Livewire\Workforce;
 
 use App\Domain\Tenant\EmployerContext;
 use App\Models\Agreement;
-use App\Models\AgreementCategory;
 use App\Models\ArcaCatalog;
 use App\Models\AuditEvent;
 use App\Models\Employment;
 use App\Models\EmploymentVersion;
 use App\Models\Worker;
 use App\Support\Authorization\AuthorizesPermissions;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,36 +20,51 @@ class EmploymentIndex extends Component
     use AuthorizesPermissions, WithPagination;
 
     public string $search = '';
+
     public string $statusFilter = 'ACTIVE';
 
     // Modal state
     public bool $showModal = false;
+
     public ?int $editingEmploymentId = null;
 
     // Worker fields
     public string $cuil = '';
+
     public string $first_name = '';
+
     public string $last_name = '';
 
     // Employment fields
     public string $file_number = '';
+
     public string $hire_date = '';
+
     public string $seniority_date = '';
+
     public string $employment_status = 'ACTIVE';
 
     // Version fields
     public string $agreement_code = '003'; // Comercio
+
     public string $category_code = '019';
+
     public string $category_name = 'VENDEDOR B';
+
     public int $workday_type = 1; // 1: Completa, 2: 3/4, 3: 1/2, 4: 1/4
+
     public string $health_insurer_code = '126205'; // OSECAC
+
     public string $cbu = '';
+
     public string $agreed_salary = '';
 
     // Scale info properties
-    public float $scale_basic = 0.0;
-    public float $scale_non_taxable = 0.0;
-    public float $suggested_basic = 0.0;
+    public string $scale_basic = '0.00';
+
+    public string $scale_non_taxable = '0.00';
+
+    public string $suggested_basic = '0.00';
 
     public function mount(): void
     {
@@ -59,7 +75,7 @@ class EmploymentIndex extends Component
     {
         return [
             'cuil' => ['required', 'string', function ($attribute, $value, $fail) {
-                if (!Worker::isValidCuil($value)) {
+                if (! Worker::isValidCuil($value)) {
                     $fail('El CUIL no es válido según el algoritmo oficial Módulo 11.');
                 }
             }],
@@ -115,33 +131,36 @@ class EmploymentIndex extends Component
             $cat = $agreement->categories()->with(['currentScale', 'latestScale'])->where('code', $this->category_code)->first();
             if ($cat) {
                 $scale = $cat->currentScale ?? $cat->latestScale;
-                $this->scale_basic = (float) ($scale?->basic_salary ?? 0);
-                $this->scale_non_taxable = (float) ($scale?->non_taxable_salary ?? 0);
+                $this->scale_basic = (string) ($scale?->basic_salary ?? '0.00');
+                $this->scale_non_taxable = (string) ($scale?->non_taxable_salary ?? '0.00');
                 $this->calculateSuggestedSalary();
+
                 return;
             }
         }
 
-        $this->scale_basic = 0.0;
-        $this->scale_non_taxable = 0.0;
-        $this->suggested_basic = 0.0;
+        $this->scale_basic = '0.00';
+        $this->scale_non_taxable = '0.00';
+        $this->suggested_basic = '0.00';
     }
 
     protected function calculateSuggestedSalary(): void
     {
-        $factor = match ((int) $this->workday_type) {
-            1 => 1.0,    // Jornada completa
-            2 => 0.75,   // 3/4 jornada
-            3 => 0.50,   // Media jornada
-            4 => 0.25,   // 1/4 jornada
-            default => 1.0,
-        };
+        $factor = BigDecimal::of(match ((int) $this->workday_type) {
+            1 => '1.00',    // Jornada completa
+            2 => '0.75',   // 3/4 jornada
+            3 => '0.50',   // Media jornada
+            4 => '0.25',   // 1/4 jornada
+            default => '1.00',
+        });
 
-        $this->suggested_basic = round($this->scale_basic * $factor, 2);
+        $this->suggested_basic = (string) BigDecimal::of($this->scale_basic)
+            ->multipliedBy($factor)
+            ->toScale(2, RoundingMode::HALF_UP);
 
         // Pre-fill or suggest agreed_salary if empty or when creating
-        if (empty($this->agreed_salary) || !$this->editingEmploymentId) {
-            $this->agreed_salary = (string) $this->suggested_basic;
+        if (empty($this->agreed_salary) || ! $this->editingEmploymentId) {
+            $this->agreed_salary = $this->suggested_basic;
         }
     }
 
@@ -150,7 +169,7 @@ class EmploymentIndex extends Component
         $this->authorizeEmployerPermission('workforce.manage');
         $this->reset([
             'editingEmploymentId', 'cuil', 'first_name', 'last_name',
-            'file_number', 'cbu', 'agreed_salary'
+            'file_number', 'cbu', 'agreed_salary',
         ]);
         $this->hire_date = now()->toDateString();
         $this->seniority_date = now()->toDateString();
@@ -203,8 +222,9 @@ class EmploymentIndex extends Component
         $this->validate();
 
         $activeEmployerId = EmployerContext::getActiveEmployerId();
-        if (!$activeEmployerId) {
+        if (! $activeEmployerId) {
             session()->flash('error', 'Debe seleccionar una empresa activa primero.');
+
             return;
         }
 
@@ -240,8 +260,8 @@ class EmploymentIndex extends Component
                 'category_name' => $this->category_name,
                 'workday_type' => $this->workday_type,
                 'health_insurer_code' => $this->health_insurer_code,
-                'cbu' => !empty($this->cbu) ? $this->cbu : null,
-                'agreed_salary' => !empty($this->agreed_salary) ? $this->agreed_salary : null,
+                'cbu' => ! empty($this->cbu) ? $this->cbu : null,
+                'agreed_salary' => ! empty($this->agreed_salary) ? $this->agreed_salary : null,
             ]);
 
             AuditEvent::record('UPDATE', 'Employment', $employment->id, $oldValues, $employment->toArray(), 'Actualización de legajo de personal');
@@ -250,6 +270,7 @@ class EmploymentIndex extends Component
             // Verify file number unique for employer
             if (Employment::where('employer_id', $activeEmployerId)->where('file_number', $this->file_number)->exists()) {
                 $this->addError('file_number', 'Ya existe un legajo con este número en esta empresa.');
+
                 return;
             }
 
@@ -271,8 +292,8 @@ class EmploymentIndex extends Component
                 'category_name' => $this->category_name,
                 'workday_type' => $this->workday_type,
                 'health_insurer_code' => $this->health_insurer_code,
-                'cbu' => !empty($this->cbu) ? $this->cbu : null,
-                'agreed_salary' => !empty($this->agreed_salary) ? $this->agreed_salary : null,
+                'cbu' => ! empty($this->cbu) ? $this->cbu : null,
+                'agreed_salary' => ! empty($this->agreed_salary) ? $this->agreed_salary : null,
             ]);
 
             AuditEvent::record('CREATE', 'Employment', $employment->id, null, $employment->toArray(), 'Alta de nuevo legajo de personal');
@@ -291,13 +312,13 @@ class EmploymentIndex extends Component
             ->join('workers', 'employments.worker_id', '=', 'workers.id')
             ->select('employments.*');
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $cleanSearch = preg_replace('/\D/', '', $this->search);
             $query->where(function ($q) use ($cleanSearch) {
                 $q->where('employments.file_number', 'like', "%{$this->search}%")
-                  ->orWhere('workers.first_name', 'like', "%{$this->search}%")
-                  ->orWhere('workers.last_name', 'like', "%{$this->search}%");
-                if (!empty($cleanSearch)) {
+                    ->orWhere('workers.first_name', 'like', "%{$this->search}%")
+                    ->orWhere('workers.last_name', 'like', "%{$this->search}%");
+                if (! empty($cleanSearch)) {
                     $q->orWhere('workers.cuil', 'like', "%{$cleanSearch}%");
                 }
             });

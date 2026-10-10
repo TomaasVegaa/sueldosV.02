@@ -38,11 +38,12 @@ class Employer extends Model
     public function currentSettings(): HasOne
     {
         $today = now()->toDateString();
+
         return $this->hasOne(EmployerSettingsVersion::class)
             ->where('effective_from', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereNull('effective_to')
-                  ->orWhere('effective_to', '>=', $today);
+                    ->orWhere('effective_to', '>=', $today);
             })
             ->latestOfMany('effective_from');
     }
@@ -68,8 +69,9 @@ class Employer extends Model
     {
         $c = preg_replace('/\D/', '', $this->cuit ?? '');
         if (strlen($c) === 11) {
-            return substr($c, 0, 2) . '-' . substr($c, 2, 8) . '-' . substr($c, 10, 1);
+            return substr($c, 0, 2).'-'.substr($c, 2, 8).'-'.substr($c, 10, 1);
         }
+
         return $this->cuit ?? '';
     }
 

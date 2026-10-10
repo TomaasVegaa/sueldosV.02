@@ -5,8 +5,9 @@ namespace Tests\Unit;
 use App\Domain\Payroll\Engine\DependencyGraph;
 use App\Domain\Payroll\Engine\ExpressionEvaluator;
 use App\Domain\Payroll\Engine\Lexer;
-use App\Domain\Payroll\Engine\Parser;
 use App\Domain\Payroll\Engine\Token;
+use Brick\Math\BigDecimal;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -62,8 +63,9 @@ class PayrollEngineTest extends TestCase
         $this->assertEquals('105261.20', $presentismo);
 
         // 3. Total Haberes Remunerativos (TH)
-        $th = (float) $context['SB'] + (float) $antiguedad + (float) $presentismo;
-        $context['TH'] = (string) $th;
+        $context['TH'] = (string) BigDecimal::of($context['SB'])
+            ->plus($antiguedad)
+            ->plus($presentismo);
 
         // 4. Jubilación 11%: TH * 11 / 100
         $jubilacion = ExpressionEvaluator::evaluateRounded('TH * 11 / 100', $context);
@@ -76,7 +78,7 @@ class PayrollEngineTest extends TestCase
 
     public function test_dependency_graph_resolves_correct_topological_order(): void
     {
-        $graph = new DependencyGraph();
+        $graph = new DependencyGraph;
 
         // Add out of order
         $graph->addConcept('201', 'TH * 11 / 100', 'DESCUENTO');
@@ -101,10 +103,26 @@ class PayrollEngineTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Dependencia circular');
 
-        $graph = new DependencyGraph();
+        $graph = new DependencyGraph;
         $graph->addConcept('001', 'SB + LQ002', 'REMUNERATIVO');
         $graph->addConcept('002', 'LQ001 * 0.10', 'REMUNERATIVO');
 
         $graph->getCalculationOrder();
+    }
+
+    public function test_evaluator_rejects_unknown_variables(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Variable desconocida');
+
+        ExpressionEvaluator::evaluate('MISSING + 1');
+    }
+
+    public function test_evaluator_rejects_float_context_values(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Valor no decimal');
+
+        ExpressionEvaluator::evaluate('AMOUNT', ['AMOUNT' => 0.1]);
     }
 }

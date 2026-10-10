@@ -22,6 +22,16 @@
             padding: 10px;
             page-break-inside: avoid;
         }
+        .simulation-warning {
+            border: 1.5px solid #b45309;
+            background-color: #fffbeb;
+            color: #78350f;
+            font-size: 8pt;
+            font-weight: bold;
+            padding: 5px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
         .header-table, .info-table, .concept-table, .footer-table {
             width: 100%;
             border-collapse: collapse;
@@ -178,8 +188,8 @@
 <body>
 
 @php
-    $employer = $payslip->employment->employer;
     $run = $payslip->runVersion->run;
+    $employer = $run->employer ?? $payslip->employment?->employer;
     $period = $run->period;
     $copies = [
         'ORIGINAL — EJEMPLAR PARA EL TRABAJADOR',
@@ -189,6 +199,9 @@
 
 @foreach($copies as $copyIndex => $copyName)
     <div class="receipt-card" style="{{ $copyIndex > 0 ? 'page-break-before: always;' : '' }}">
+        <div class="simulation-warning">
+            SIMULACIÓN NO VALIDADA — BORRADOR TÉCNICO, NO APTO PARA USO LEGAL NI CONTABLE
+        </div>
         <!-- Encabezado Empleador y Recibo -->
         <table class="header-table">
             <tr>
@@ -203,8 +216,8 @@
                 </td>
                 <td class="receipt-badge" style="width: 35%;">
                     <div class="badge-box">
-                        <div class="badge-title">RECIBO DE HABERES</div>
-                        <div class="badge-sub">LEY 20.744 ART. 140</div>
+                        <div class="badge-title">BORRADOR DE RECIBO</div>
+                        <div class="badge-sub">PENDIENTE DE VALIDACIÓN PROFESIONAL</div>
                         <div style="font-size: 8pt; font-weight: bold; margin-top: 2px;">
                             PERÍODO: {{ strtoupper($period->formatted_period) }}
                         </div>
@@ -282,16 +295,16 @@
                             <td class="text-center font-mono">{{ $line->concept_code }}</td>
                             <td class="text-left">{{ $line->concept_name }}</td>
                             <td class="text-center font-mono">
-                                {{ $line->quantity ? number_format($line->quantity, 2, ',', '.') . ($line->unit ? ' ' . $line->unit : '') : '' }}
+                                {{ $line->quantity !== null ? \App\Support\DecimalFormatter::format($line->quantity) . ($line->unit ? ' ' . $line->unit : '') : '' }}
                             </td>
                             <td class="text-right font-mono">
-                                {{ $line->remunerative_amount > 0 ? '$ ' . number_format($line->remunerative_amount, 2, ',', '.') : '' }}
+                                {{ \App\Support\DecimalFormatter::isPositive($line->remunerative_amount) ? '$ ' . \App\Support\DecimalFormatter::format($line->remunerative_amount) : '' }}
                             </td>
                             <td class="text-right font-mono">
-                                {{ $line->non_taxable_amount > 0 ? '$ ' . number_format($line->non_taxable_amount, 2, ',', '.') : '' }}
+                                {{ \App\Support\DecimalFormatter::isPositive($line->non_taxable_amount) ? '$ ' . \App\Support\DecimalFormatter::format($line->non_taxable_amount) : '' }}
                             </td>
                             <td class="text-right font-mono" style="color: #991b1b;">
-                                {{ $line->deduction_amount > 0 ? '$ ' . number_format($line->deduction_amount, 2, ',', '.') : '' }}
+                                {{ \App\Support\DecimalFormatter::isPositive($line->deduction_amount) ? '$ ' . \App\Support\DecimalFormatter::format($line->deduction_amount) : '' }}
                             </td>
                         </tr>
                     @endif
@@ -309,9 +322,9 @@
             </tr>
             <tr>
                 <td></td>
-                <td class="text-right font-mono">$ {{ number_format($payslip->gross_remunerative, 2, ',', '.') }}</td>
-                <td class="text-right font-mono">$ {{ number_format($payslip->gross_non_remunerative, 2, ',', '.') }}</td>
-                <td class="text-right font-mono" style="color: #991b1b;">$ {{ number_format($payslip->total_deductions, 2, ',', '.') }}</td>
+                <td class="text-right font-mono">$ {{ \App\Support\DecimalFormatter::format($payslip->gross_remunerative) }}</td>
+                <td class="text-right font-mono">$ {{ \App\Support\DecimalFormatter::format($payslip->gross_non_remunerative) }}</td>
+                <td class="text-right font-mono" style="color: #991b1b;">$ {{ \App\Support\DecimalFormatter::format($payslip->total_deductions) }}</td>
             </tr>
         </table>
 
@@ -325,7 +338,7 @@
                 </td>
                 <td style="padding: 6px 10px; text-align: right; vertical-align: middle;">
                     <span style="font-size: 13pt; font-weight: bold; color: #14532d; font-family: 'Courier New', Courier, monospace;">
-                        $ {{ number_format($payslip->net_salary, 2, ',', '.') }}
+                        $ {{ \App\Support\DecimalFormatter::format($payslip->net_salary) }}
                     </span>
                 </td>
             </tr>
@@ -340,9 +353,9 @@
             <tr>
                 <td>
                     <strong>Bases Imponibles ARCA (LSD):</strong>
-                    Base 1 (SIPA): $ {{ number_format($payslip->gross_remunerative, 2, ',', '.') }} &nbsp;|&nbsp;
-                    Base 4 (Salud): $ {{ number_format($payslip->gross_remunerative + $payslip->gross_non_remunerative, 2, ',', '.') }} &nbsp;|&nbsp;
-                    Contribuciones Patronales Estimadas: $ {{ number_format($payslip->employer_contributions_total, 2, ',', '.') }}
+                    Base 1 (SIPA): $ {{ \App\Support\DecimalFormatter::format($payslip->gross_remunerative) }} &nbsp;|&nbsp;
+                    Base 4 (Salud): $ {{ \App\Support\DecimalFormatter::format(\App\Support\DecimalFormatter::sum([$payslip->gross_remunerative, $payslip->gross_non_remunerative])) }} &nbsp;|&nbsp;
+                    Contribuciones Patronales Estimadas: $ {{ \App\Support\DecimalFormatter::format($payslip->employer_contributions_total) }}
                 </td>
                 <td style="text-align: right;">
                     <strong>Hash Verificación:</strong> {{ substr($payslip->runVersion->snapshot_sha256, 0, 16) }}... (v{{ $payslip->runVersion->version_number }})

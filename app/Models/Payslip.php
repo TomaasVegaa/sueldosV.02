@@ -51,7 +51,7 @@ class Payslip extends Model
 
     public function employment(): BelongsTo
     {
-        return $this->belongsTo(Employment::class);
+        return $this->belongsTo(Employment::class)->withoutGlobalScopes();
     }
 
     public function lines(): HasMany

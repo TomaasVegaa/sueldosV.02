@@ -7,8 +7,8 @@ use App\Domain\Payroll\Engine\Parser;
 use App\Models\AuditEvent;
 use App\Models\PayrollConcept;
 use App\Support\Authorization\AuthorizesPermissions;
+use App\Support\DecimalFormatter;
 use Exception;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,37 +17,61 @@ class ConceptIndex extends Component
     use AuthorizesPermissions, WithPagination;
 
     public string $search = '';
+
     public string $typeFilter = 'ALL'; // ALL | REMUNERATIVO | NO_REMUNERATIVO | DESCUENTO
 
     // Modal state for Concept creation / edit
     public bool $showModal = false;
+
     public ?int $editingConceptId = null;
 
     public string $code = '';
+
     public string $name = '';
+
     public string $type = 'REMUNERATIVO';
+
     public string $formula = 'SB';
+
     public ?string $default_amount = '';
+
     public ?string $liquidation_condition = '';
+
     public string $condition_type = 'P'; // P: Porcentual, U: Unidades, T: Todos
+
     public string $calculation_mode = 'FORMULA'; // FORMULA | INFORMED_VALUE
+
     public ?string $arca_lsd_code = '';
+
     public bool $print_on_receipt = true;
+
     public bool $print_quantity = true;
+
     public bool $print_unit_price = false;
+
     public bool $is_automatic = true;
+
     public int $order = 10;
+
     public string $status = 'ACTIVE';
 
     // Interactive Formula Tester in Modal
     public bool $showTester = false;
+
     public string $test_sb = '600000.00';
+
     public string $test_an = '2';
+
     public string $test_vi = '1';
+
     public string $test_im = '11';
+
     public string $test_th = '650000.00';
+
     public string $test_ts = '60000.00';
+
     public string $test_result = '';
+
     public string $test_error = '';
 
     protected $queryString = [
@@ -131,6 +155,7 @@ class ConceptIndex extends Component
 
         if (empty(trim($this->formula))) {
             $this->test_error = 'La fórmula no puede estar vacía.';
+
             return;
         }
 
@@ -142,7 +167,7 @@ class ConceptIndex extends Component
                 'SB' => $this->test_sb,
                 'AN' => $this->test_an,
                 'VI' => $this->test_vi,
-                'IM' => !empty($this->default_amount) ? $this->default_amount : $this->test_im,
+                'IM' => ! empty($this->default_amount) ? $this->default_amount : $this->test_im,
                 'TH' => $this->test_th,
                 'TS' => $this->test_ts,
                 'TD' => '0.00',
@@ -152,9 +177,9 @@ class ConceptIndex extends Component
             ];
 
             $result = ExpressionEvaluator::evaluateRounded($this->formula, $context);
-            $this->test_result = '$ ' . number_format((float) $result, 2, ',', '.');
+            $this->test_result = '$ '.DecimalFormatter::format($result);
         } catch (Exception $e) {
-            $this->test_error = 'Error de sintaxis: ' . $e->getMessage();
+            $this->test_error = 'Error de sintaxis: '.$e->getMessage();
         }
     }
 
@@ -180,7 +205,8 @@ class ConceptIndex extends Component
             try {
                 Parser::parseString($this->formula);
             } catch (Exception $e) {
-                $this->addError('formula', 'Fórmula no válida: ' . $e->getMessage());
+                $this->addError('formula', 'Fórmula no válida: '.$e->getMessage());
+
                 return;
             }
         }
@@ -192,11 +218,11 @@ class ConceptIndex extends Component
             'name' => trim($this->name),
             'type' => $this->type,
             'formula' => trim($this->formula),
-            'default_amount' => $this->default_amount !== '' && is_numeric($this->default_amount) ? (float) $this->default_amount : null,
-            'liquidation_condition' => !empty(trim($this->liquidation_condition)) ? trim($this->liquidation_condition) : null,
+            'default_amount' => $this->default_amount !== '' && is_numeric($this->default_amount) ? $this->default_amount : null,
+            'liquidation_condition' => ! empty(trim($this->liquidation_condition)) ? trim($this->liquidation_condition) : null,
             'condition_type' => $this->condition_type,
             'calculation_mode' => $this->calculation_mode,
-            'arca_lsd_code' => !empty(trim($this->arca_lsd_code)) ? trim($this->arca_lsd_code) : null,
+            'arca_lsd_code' => ! empty(trim($this->arca_lsd_code)) ? trim($this->arca_lsd_code) : null,
             'print_on_receipt' => $this->print_on_receipt,
             'print_quantity' => $this->print_quantity,
             'print_unit_price' => $this->print_unit_price,
@@ -219,7 +245,7 @@ class ConceptIndex extends Component
             entityType: 'PayrollConcept',
             entityId: $concept->id,
             newValues: $data,
-            reason: "Concepto global {$concept->code} ({$concept->name}) " . ($this->editingConceptId ? 'modificado' : 'creado') . ' para todos los convenios.'
+            reason: "Concepto global {$concept->code} ({$concept->name}) ".($this->editingConceptId ? 'modificado' : 'creado').' para todos los convenios.'
         );
 
         session()->flash('success', "Concepto global {$concept->code} - {$concept->name} guardado correctamente. Aplica a todos los convenios.");
@@ -241,7 +267,7 @@ class ConceptIndex extends Component
             reason: "Estado del concepto {$concept->code} cambiado a {$newStatus}"
         );
 
-        session()->flash('success', "Concepto {$concept->code} ahora está " . ($newStatus === 'ACTIVE' ? 'Activo' : 'Inactivo') . '.');
+        session()->flash('success', "Concepto {$concept->code} ahora está ".($newStatus === 'ACTIVE' ? 'Activo' : 'Inactivo').'.');
     }
 
     public function render()
@@ -249,7 +275,7 @@ class ConceptIndex extends Component
         $this->authorizeAnyPermission('agreements.view');
         $query = PayrollConcept::global();
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $s = trim($this->search);
             $query->where(function ($q) use ($s) {
                 $q->where('code', 'like', "%{$s}%")

@@ -11,7 +11,7 @@ trait BelongsToEmployer
 {
     public static function bootBelongsToEmployer(): void
     {
-        static::addGlobalScope(new MultiEmployerScope());
+        static::addGlobalScope(new MultiEmployerScope);
 
         static::creating(function ($model) {
             if (empty($model->employer_id)) {

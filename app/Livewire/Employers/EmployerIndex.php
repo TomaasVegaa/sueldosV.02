@@ -16,16 +16,24 @@ class EmployerIndex extends Component
     use AuthorizesPermissions, WithPagination;
 
     public string $search = '';
+
     public string $statusFilter = 'ALL';
 
     // Form Modal state
     public bool $showModal = false;
+
     public ?int $editingEmployerId = null;
+
     public string $cuit = '';
+
     public string $legal_name = '';
+
     public string $status = 'ACTIVE';
+
     public string $payment_place = 'San Miguel de Tucumán';
+
     public string $contribution_bank = 'Banco Macro S.A.';
+
     public string $notes = '';
 
     public function mount(): void
@@ -37,7 +45,7 @@ class EmployerIndex extends Component
     {
         return [
             'cuit' => ['required', 'string', function ($attribute, $value, $fail) {
-                if (!Employer::isValidCuit($value)) {
+                if (! Employer::isValidCuit($value)) {
                     $fail('El CUIT ingresado no es válido según el algoritmo oficial Módulo 11.');
                 }
             }],
@@ -113,6 +121,7 @@ class EmployerIndex extends Component
             // Check unique CUIT
             if (Employer::where('cuit', $cleanCuit)->exists()) {
                 $this->addError('cuit', 'Ya existe una empresa registrada con este CUIT.');
+
                 return;
             }
 
@@ -160,11 +169,11 @@ class EmployerIndex extends Component
                 ->withoutGlobalScopes()
                 ->where('status', 'ACTIVE')]);
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $cleanSearch = preg_replace('/\D/', '', $this->search);
             $query->where(function ($q) use ($cleanSearch) {
                 $q->where('legal_name', 'like', "%{$this->search}%");
-                if (!empty($cleanSearch)) {
+                if (! empty($cleanSearch)) {
                     $q->orWhere('cuit', 'like', "%{$cleanSearch}%");
                 }
             });

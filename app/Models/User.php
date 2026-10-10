@@ -116,7 +116,7 @@ class User extends Authenticatable
             ->whereNull('employer_id')
             ->whereHas('role', fn ($q) => $q->whereIn('code', [
                 'ADMIN_TECH', 'ADMIN_FUNC', 'LIQUIDADOR', 'REVISOR', 'AUDITOR',
-                'ADMIN_ESTUDIO', 'LIQUIDADOR_SENIOR', 'OPERADOR_JUNIOR'
+                'ADMIN_ESTUDIO', 'LIQUIDADOR_SENIOR', 'OPERADOR_JUNIOR',
             ]))
             ->exists();
 

@@ -9,10 +9,11 @@
                 </span>
             </h1>
             <p class="text-sm text-slate-500 mt-0.5">
-                Cálculo salarial multiempresa con motor AST de precisión decimal, versionado inmutable y recibos legales (art. 140 LCT).
+                Prototipo técnico con cálculo decimal y versionado de resultados.
             </p>
         </div>
 
+        @if($canCalculate)
         <div class="flex items-center gap-3">
             <button wire:click="openNewRunModal" 
                     class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
@@ -22,6 +23,15 @@
                 <span>Nueva Liquidación</span>
             </button>
         </div>
+        @endif
+    </div>
+
+    <div class="p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-950 text-sm">
+        <strong>SIMULACIÓN NO VALIDADA.</strong>
+        Los conceptos, fórmulas, porcentajes, bases y recibos de este módulo requieren aprobación de un profesional liquidador antes de cualquier uso real.
+        @if(!$simulationEnabled)
+            <span class="block mt-1 font-semibold">El cálculo está deshabilitado por configuración.</span>
+        @endif
     </div>
 
     <!-- Feedback Alerts -->
@@ -55,10 +65,12 @@
             <p class="text-sm text-slate-500 max-w-md mx-auto mt-1 mb-6">
                 Comience creando el primer período mensual para la empresa activa y calcule los recibos para su nómina de Comercio.
             </p>
-            <button wire:click="openNewRunModal" 
-                    class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
-                Crear Período y Liquidación
-            </button>
+            @if($canCalculate)
+                <button wire:click="openNewRunModal"
+                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+                    Crear Período y Liquidación
+                </button>
+            @endif
         </div>
     @else
         <!-- Period & Run Selector Bar -->
@@ -89,6 +101,7 @@
 
             @if($currentRun)
                 <div class="flex items-center gap-2">
+                    @if($canCalculate)
                     <button wire:click="openNoveltiesModal({{ $currentRun->id }})" 
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition">
                         <span>📝 Novedades y Días</span>
@@ -100,8 +113,9 @@
                         <span wire:loading.remove wire:target="calculateRun({{ $currentRun->id }})">⚡ {{ $currentVersion ? 'Recalcular Lote' : 'Calcular Lote' }}</span>
                         <span wire:loading wire:target="calculateRun({{ $currentRun->id }})">Calculando...</span>
                     </button>
+                    @endif
 
-                    @if($currentVersion && $payslips->isNotEmpty())
+                    @if($canExport && $currentVersion && $payslips->isNotEmpty())
                         <a href="{{ route('payroll.batch.pdf', $currentVersion->id) }}" target="_blank"
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg border border-rose-200 transition">
                             <span>📄 Descargar Todos (PDF)</span>
@@ -159,31 +173,31 @@
                         <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
                             <div class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Bruto Remunerativo</div>
                             <div class="text-base font-bold text-slate-100 font-mono mt-0.5">
-                                $ {{ number_format($payslips->sum('gross_remunerative'), 2, ',', '.') }}
+                                $ {{ \App\Support\DecimalFormatter::format(\App\Support\DecimalFormatter::sum($payslips->pluck('gross_remunerative'))) }}
                             </div>
                         </div>
                         <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
                             <div class="text-[10px] font-bold uppercase text-sky-400 tracking-wider">No Remunerativo</div>
                             <div class="text-base font-bold text-sky-300 font-mono mt-0.5">
-                                $ {{ number_format($payslips->sum('gross_non_remunerative'), 2, ',', '.') }}
+                                $ {{ \App\Support\DecimalFormatter::format(\App\Support\DecimalFormatter::sum($payslips->pluck('gross_non_remunerative'))) }}
                             </div>
                         </div>
                         <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
                             <div class="text-[10px] font-bold uppercase text-rose-400 tracking-wider">Retenciones / Desc.</div>
                             <div class="text-base font-bold text-rose-300 font-mono mt-0.5">
-                                $ {{ number_format($payslips->sum('total_deductions'), 2, ',', '.') }}
+                                $ {{ \App\Support\DecimalFormatter::format(\App\Support\DecimalFormatter::sum($payslips->pluck('total_deductions'))) }}
                             </div>
                         </div>
                         <div class="bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-800/60">
                             <div class="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Neto Total a Cobrar</div>
                             <div class="text-base font-bold text-emerald-300 font-mono mt-0.5">
-                                $ {{ number_format($payslips->sum('net_salary'), 2, ',', '.') }}
+                                $ {{ \App\Support\DecimalFormatter::format(\App\Support\DecimalFormatter::sum($payslips->pluck('net_salary'))) }}
                             </div>
                         </div>
                         <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
                             <div class="text-[10px] font-bold uppercase text-indigo-400 tracking-wider">Patronales Estimadas</div>
                             <div class="text-base font-bold text-indigo-300 font-mono mt-0.5">
-                                $ {{ number_format($payslips->sum('employer_contributions_total'), 2, ',', '.') }}
+                                $ {{ \App\Support\DecimalFormatter::format(\App\Support\DecimalFormatter::sum($payslips->pluck('employer_contributions_total'))) }}
                             </div>
                         </div>
                     </div>
@@ -229,16 +243,16 @@
                                         <td class="py-3 px-4 font-mono text-slate-500">{{ $slip->worker_cuil }}</td>
                                         <td class="py-3 px-4 text-slate-600">{{ $slip->category_code }} - {{ $slip->category_name }}</td>
                                         <td class="py-3 px-4 text-right font-mono text-slate-800">
-                                            $ {{ number_format($slip->gross_remunerative, 2, ',', '.') }}
+                                            $ {{ \App\Support\DecimalFormatter::format($slip->gross_remunerative) }}
                                         </td>
                                         <td class="py-3 px-4 text-right font-mono text-sky-700">
-                                            $ {{ number_format($slip->gross_non_remunerative, 2, ',', '.') }}
+                                            $ {{ \App\Support\DecimalFormatter::format($slip->gross_non_remunerative) }}
                                         </td>
                                         <td class="py-3 px-4 text-right font-mono text-rose-700">
-                                            $ {{ number_format($slip->total_deductions, 2, ',', '.') }}
+                                            $ {{ \App\Support\DecimalFormatter::format($slip->total_deductions) }}
                                         </td>
                                         <td class="py-3 px-4 text-right font-mono font-bold text-emerald-700 text-sm">
-                                            $ {{ number_format($slip->net_salary, 2, ',', '.') }}
+                                            $ {{ \App\Support\DecimalFormatter::format($slip->net_salary) }}
                                         </td>
                                         <td class="py-3 px-4 text-center">
                                             <div class="inline-flex items-center gap-1.5">
@@ -246,6 +260,7 @@
                                                         class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded text-[11px] transition">
                                                     Ver Recibo
                                                 </button>
+                                                @if($canExport)
                                                 <a href="{{ route('payroll.payslip.pdf', $slip->id) }}" target="_blank"
                                                    class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-[11px] transition" title="Ver PDF">
                                                     PDF
@@ -256,6 +271,7 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                     </svg>
                                                 </a>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -437,6 +453,7 @@
                         </p>
                     </div>
                     <div class="flex items-center gap-2">
+                        @if($canExport)
                         <a href="{{ route('payroll.payslip.pdf', $inspectingSlip->id) }}" target="_blank"
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
                             <span>📄 Ver PDF</span>
@@ -445,6 +462,7 @@
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition">
                             <span>⬇️ Descargar</span>
                         </a>
+                        @endif
                         <button type="button" wire:click="closePayslipModal" class="text-slate-400 hover:text-slate-600 font-bold text-xl ml-2">&times;</button>
                     </div>
                 </div>
@@ -475,16 +493,16 @@
                                             @endif
                                         </td>
                                         <td class="py-2 px-3 text-center text-slate-600">
-                                            {{ $line->quantity ? number_format($line->quantity, 2, ',', '.') . ($line->unit ? ' ' . $line->unit : '') : '-' }}
+                                            {{ $line->quantity !== null ? \App\Support\DecimalFormatter::format($line->quantity) . ($line->unit ? ' ' . $line->unit : '') : '-' }}
                                         </td>
                                         <td class="py-2 px-3 text-right text-slate-900">
-                                            {{ $line->remunerative_amount > 0 ? '$ ' . number_format($line->remunerative_amount, 2, ',', '.') : '' }}
+                                            {{ \App\Support\DecimalFormatter::isPositive($line->remunerative_amount) ? '$ ' . \App\Support\DecimalFormatter::format($line->remunerative_amount) : '' }}
                                         </td>
                                         <td class="py-2 px-3 text-right text-sky-700">
-                                            {{ $line->non_taxable_amount > 0 ? '$ ' . number_format($line->non_taxable_amount, 2, ',', '.') : '' }}
+                                            {{ \App\Support\DecimalFormatter::isPositive($line->non_taxable_amount) ? '$ ' . \App\Support\DecimalFormatter::format($line->non_taxable_amount) : '' }}
                                         </td>
                                         <td class="py-2 px-3 text-right text-rose-700 font-semibold">
-                                            {{ $line->deduction_amount > 0 ? '$ ' . number_format($line->deduction_amount, 2, ',', '.') : '' }}
+                                            {{ \App\Support\DecimalFormatter::isPositive($line->deduction_amount) ? '$ ' . \App\Support\DecimalFormatter::format($line->deduction_amount) : '' }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -493,13 +511,13 @@
                                 <tr>
                                     <td colspan="3" class="py-2.5 px-3 text-right text-slate-600 uppercase font-sans">Subtotales:</td>
                                     <td class="py-2.5 px-3 text-right text-slate-900">
-                                        $ {{ number_format($inspectingSlip->gross_remunerative, 2, ',', '.') }}
+                                        $ {{ \App\Support\DecimalFormatter::format($inspectingSlip->gross_remunerative) }}
                                     </td>
                                     <td class="py-2.5 px-3 text-right text-sky-700">
-                                        $ {{ number_format($inspectingSlip->gross_non_remunerative, 2, ',', '.') }}
+                                        $ {{ \App\Support\DecimalFormatter::format($inspectingSlip->gross_non_remunerative) }}
                                     </td>
                                     <td class="py-2.5 px-3 text-right text-rose-700">
-                                        $ {{ number_format($inspectingSlip->total_deductions, 2, ',', '.') }}
+                                        $ {{ \App\Support\DecimalFormatter::format($inspectingSlip->total_deductions) }}
                                     </td>
                                 </tr>
                             </tfoot>
@@ -515,7 +533,7 @@
                             </div>
                         </div>
                         <div class="text-2xl font-bold font-mono text-emerald-900">
-                            $ {{ number_format($inspectingSlip->net_salary, 2, ',', '.') }}
+                            $ {{ \App\Support\DecimalFormatter::format($inspectingSlip->net_salary) }}
                         </div>
                     </div>
 
@@ -526,12 +544,12 @@
                             @foreach($inspectingSlip->bases as $b)
                                 <div class="bg-white p-2 rounded border border-slate-200">
                                     <span class="text-[10px] text-slate-400 block">{{ $b->base_code }}</span>
-                                    <span class="font-bold text-slate-800">$ {{ number_format($b->amount, 2, ',', '.') }}</span>
+                                    <span class="font-bold text-slate-800">$ {{ \App\Support\DecimalFormatter::format($b->amount) }}</span>
                                 </div>
                             @endforeach
                             <div class="bg-white p-2 rounded border border-slate-200">
                                 <span class="text-[10px] text-indigo-500 font-bold block">Contribuciones Patronales</span>
-                                <span class="font-bold text-indigo-700">$ {{ number_format($inspectingSlip->employer_contributions_total, 2, ',', '.') }}</span>
+                                <span class="font-bold text-indigo-700">$ {{ \App\Support\DecimalFormatter::format($inspectingSlip->employer_contributions_total) }}</span>
                             </div>
                         </div>
                     </div>

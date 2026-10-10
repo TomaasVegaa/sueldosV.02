@@ -8,6 +8,7 @@ class Parser
 {
     /** @var Token[] */
     protected array $tokens;
+
     protected int $cursor = 0;
 
     public function __construct(array $tokens)
@@ -20,6 +21,7 @@ class Parser
         $lexer = new Lexer($expression);
         $tokens = $lexer->tokenize();
         $parser = new self($tokens);
+
         return $parser->parse();
     }
 
@@ -27,7 +29,7 @@ class Parser
     {
         $node = $this->parseExpression();
 
-        if (!$this->currentToken()->is(Token::T_EOF)) {
+        if (! $this->currentToken()->is(Token::T_EOF)) {
             throw new InvalidArgumentException(
                 "Sintaxis inválida cerca del token '{$this->currentToken()->value}' en posición {$this->currentToken()->position}"
             );
@@ -80,6 +82,7 @@ class Parser
         // Unary plus
         if ($token->is(Token::T_PLUS)) {
             $this->advance();
+
             return $this->parseFactor();
         }
 
@@ -87,6 +90,7 @@ class Parser
         if ($token->is(Token::T_MINUS)) {
             $this->advance();
             $operand = $this->parseFactor();
+
             return new UnaryOpNode('-', $operand);
         }
 
@@ -95,11 +99,12 @@ class Parser
             $this->advance();
             $expr = $this->parseExpression();
 
-            if (!$this->currentToken()->is(Token::T_RPAREN)) {
+            if (! $this->currentToken()->is(Token::T_RPAREN)) {
                 throw new InvalidArgumentException("Se esperaba paréntesis de cierre ')' en posición {$this->currentToken()->position}");
             }
 
             $this->advance();
+
             return $expr;
         }
 
@@ -107,6 +112,7 @@ class Parser
         if ($token->is(Token::T_NUMBER)) {
             $value = $token->value;
             $this->advance();
+
             return new NumberNode($value);
         }
 
@@ -114,6 +120,7 @@ class Parser
         if ($token->is(Token::T_IDENTIFIER)) {
             $name = $token->value;
             $this->advance();
+
             return new VariableNode($name);
         }
 

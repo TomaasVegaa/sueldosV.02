@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PayrollPdfController;
+use App\Livewire\Agreements\AgreementIndex;
 use App\Livewire\Arca\CatalogViewer;
 use App\Livewire\Audit\AuditLogViewer;
+use App\Livewire\Concepts\ConceptIndex;
 use App\Livewire\Employers\EmployerIndex;
+use App\Livewire\Payroll\PayrollRunIndex;
 use App\Livewire\Workforce\EmploymentIndex;
 use Illuminate\Support\Facades\Route;
 
@@ -21,14 +25,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/employers', EmployerIndex::class)->name('employers.index');
     Route::get('/workforce', EmploymentIndex::class)->name('workforce.index');
-    Route::get('/agreements', \App\Livewire\Agreements\AgreementIndex::class)->name('agreements.index');
-    Route::get('/concepts', \App\Livewire\Concepts\ConceptIndex::class)->name('concepts.index');
+    Route::get('/agreements', AgreementIndex::class)->name('agreements.index');
+    Route::get('/concepts', ConceptIndex::class)->name('concepts.index');
     Route::get('/catalogs', CatalogViewer::class)->name('catalogs.index');
     Route::get('/audit', AuditLogViewer::class)->name('audit.index');
 
     // Payroll Settlement & PDF Routes
-    Route::get('/payroll', \App\Livewire\Payroll\PayrollRunIndex::class)->name('payroll.index');
-    Route::get('/payroll/payslip/{payslip}/pdf', [\App\Http\Controllers\PayrollPdfController::class, 'streamPayslip'])->name('payroll.payslip.pdf');
-    Route::get('/payroll/payslip/{payslip}/download', [\App\Http\Controllers\PayrollPdfController::class, 'downloadPayslip'])->name('payroll.payslip.download');
-    Route::get('/payroll/batch/{version}/pdf', [\App\Http\Controllers\PayrollPdfController::class, 'downloadBatch'])->name('payroll.batch.pdf');
+    Route::get('/payroll', PayrollRunIndex::class)->name('payroll.index');
+    Route::get('/payroll/payslip/{payslip}/pdf', [PayrollPdfController::class, 'streamPayslip'])->name('payroll.payslip.pdf');
+    Route::get('/payroll/payslip/{payslip}/download', [PayrollPdfController::class, 'downloadPayslip'])->name('payroll.payslip.download');
+    Route::get('/payroll/batch/{version}/pdf', [PayrollPdfController::class, 'downloadBatch'])->name('payroll.batch.pdf');
 });

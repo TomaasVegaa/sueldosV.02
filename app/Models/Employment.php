@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 class Employment extends Model
 {
-    use HasFactory, BelongsToEmployer;
+    use BelongsToEmployer, HasFactory;
 
     protected $fillable = [
         'uuid',
@@ -53,24 +53,26 @@ class Employment extends Model
 
     public function versions(): HasMany
     {
-        return $this->hasMany(EmploymentVersion::class)->orderByDesc('effective_from');
+        return $this->hasMany(EmploymentVersion::class)->withoutGlobalScopes()->orderByDesc('effective_from');
     }
 
     public function currentVersion(): HasOne
     {
         $today = now()->toDateString();
+
         return $this->hasOne(EmploymentVersion::class)
+            ->withoutGlobalScopes()
             ->where('effective_from', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereNull('effective_to')
-                  ->orWhere('effective_to', '>=', $today);
+                    ->orWhere('effective_to', '>=', $today);
             })
             ->latestOfMany('effective_from');
     }
 
     public function latestVersion(): HasOne
     {
-        return $this->hasOne(EmploymentVersion::class)->latestOfMany('effective_from');
+        return $this->hasOne(EmploymentVersion::class)->withoutGlobalScopes()->latestOfMany('effective_from');
     }
 
     /**
@@ -82,7 +84,7 @@ class Employment extends Model
             ->where('effective_from', '<=', $date)
             ->where(function ($q) use ($date) {
                 $q->whereNull('effective_to')
-                  ->orWhere('effective_to', '>=', $date);
+                    ->orWhere('effective_to', '>=', $date);
             })
             ->orderByDesc('effective_from')
             ->first();

@@ -36,7 +36,7 @@ class PayrollRunVersion extends Model
 
     public function run(): BelongsTo
     {
-        return $this->belongsTo(PayrollRun::class, 'payroll_run_id');
+        return $this->belongsTo(PayrollRun::class, 'payroll_run_id')->withoutGlobalScopes();
     }
 
     public function payslips(): HasMany

@@ -41,8 +41,9 @@ class Worker extends Model
     {
         $c = preg_replace('/\D/', '', $this->cuil ?? '');
         if (strlen($c) === 11) {
-            return substr($c, 0, 2) . '-' . substr($c, 2, 8) . '-' . substr($c, 10, 1);
+            return substr($c, 0, 2).'-'.substr($c, 2, 8).'-'.substr($c, 10, 1);
         }
+
         return $this->cuil ?? '';
     }
 

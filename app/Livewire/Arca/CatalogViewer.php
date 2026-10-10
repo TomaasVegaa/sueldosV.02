@@ -12,6 +12,7 @@ class CatalogViewer extends Component
     use AuthorizesPermissions, WithPagination;
 
     public string $typeFilter = 'OBRA_SOCIAL';
+
     public string $search = '';
 
     public function mount(): void
@@ -30,10 +31,10 @@ class CatalogViewer extends Component
         $this->authorizeAnyPermission('catalogs.view');
         $query = ArcaCatalog::ofType($this->typeFilter);
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->where(function ($q) {
                 $q->where('code', 'like', "%{$this->search}%")
-                  ->orWhere('description', 'like', "%{$this->search}%");
+                    ->orWhere('description', 'like', "%{$this->search}%");
             });
         }
 

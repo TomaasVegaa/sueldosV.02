@@ -20,7 +20,7 @@ class EmployerContext
             return static::$overrideEmployerId;
         }
 
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return null;
         }
 
@@ -55,7 +55,7 @@ class EmployerContext
         if ($employerId === null) {
             Session::forget('active_employer_id');
         } else {
-            if (!Auth::check() || !Auth::user()->accessibleEmployers()->contains('id', $employerId)) {
+            if (! Auth::check() || ! Auth::user()->accessibleEmployers()->contains('id', $employerId)) {
                 throw new AuthorizationException('No tiene acceso al empleador solicitado.');
             }
 
@@ -69,6 +69,7 @@ class EmployerContext
     public static function getActiveEmployer(): ?Employer
     {
         $id = static::getActiveEmployerId();
+
         return $id ? Employer::find($id) : null;
     }
 

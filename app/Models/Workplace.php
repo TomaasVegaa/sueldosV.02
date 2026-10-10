@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Workplace extends Model
 {
-    use HasFactory, BelongsToEmployer;
+    use BelongsToEmployer, HasFactory;
 
     protected $fillable = [
         'employer_id',

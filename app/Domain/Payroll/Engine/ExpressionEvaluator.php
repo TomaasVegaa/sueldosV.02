@@ -17,23 +17,23 @@ class ExpressionEvaluator
     /**
      * Evaluate an AST or expression string with the given variable context.
      *
-     * @param AstNode|string $expression
-     * @param array<string, mixed> $context
-     * @return BigDecimal
+     * @param  array<string, mixed>  $context
      */
     public static function evaluate(AstNode|string $expression, array $context = []): BigDecimal
     {
         $node = is_string($expression) ? Parser::parseString($expression) : $expression;
         $evaluator = new self($context);
+
         return $evaluator->evaluateNode($node);
     }
 
     /**
-     * Helper to evaluate and return as rounded 2-decimal string or float.
+     * Helper to evaluate and return a rounded two-decimal string.
      */
     public static function evaluateRounded(AstNode|string $expression, array $context = []): string
     {
         $result = self::evaluate($expression, $context);
+
         return (string) $result->toScale(self::FINAL_SCALE, RoundingMode::HALF_UP);
     }
 
@@ -46,12 +46,10 @@ class ExpressionEvaluator
             $normalizedKey = strtoupper(trim((string) $key));
             if ($value instanceof BigDecimal) {
                 $this->normalizedContext[$normalizedKey] = $value;
-            } elseif (is_numeric($value)) {
+            } elseif (is_int($value) || (is_string($value) && is_numeric($value))) {
                 $this->normalizedContext[$normalizedKey] = BigDecimal::of((string) $value);
-            } elseif ($value === null || $value === '') {
-                $this->normalizedContext[$normalizedKey] = BigDecimal::zero();
             } else {
-                $this->normalizedContext[$normalizedKey] = BigDecimal::of((string) $value);
+                throw new InvalidArgumentException("Valor no decimal para la variable {$normalizedKey}.");
             }
         }
     }
@@ -64,15 +62,16 @@ class ExpressionEvaluator
 
         if ($node instanceof VariableNode) {
             $varName = strtoupper($node->name);
-            if (!array_key_exists($varName, $this->normalizedContext)) {
-                // If variable not in context, default to zero (e.g. absent voluntary discount or initial LQ)
-                return BigDecimal::zero();
+            if (! array_key_exists($varName, $this->normalizedContext)) {
+                throw new InvalidArgumentException("Variable desconocida en la fórmula: {$varName}.");
             }
+
             return $this->normalizedContext[$varName];
         }
 
         if ($node instanceof UnaryOpNode) {
             $operandVal = $this->evaluateNode($node->operand);
+
             return $node->operator === '-' ? $operandVal->negated() : $operandVal;
         }
 
@@ -89,13 +88,13 @@ class ExpressionEvaluator
             };
         }
 
-        throw new InvalidArgumentException('Tipo de nodo AST no reconocido: ' . get_class($node));
+        throw new InvalidArgumentException('Tipo de nodo AST no reconocido: '.get_class($node));
     }
 
     protected function divide(BigDecimal $left, BigDecimal $right): BigDecimal
     {
         if ($right->isZero()) {
-            throw new InvalidArgumentException("División por cero en el cálculo salarial.");
+            throw new InvalidArgumentException('División por cero en el cálculo salarial.');
         }
 
         return $left->dividedBy($right, self::INTERMEDIATE_SCALE, RoundingMode::HALF_UP);

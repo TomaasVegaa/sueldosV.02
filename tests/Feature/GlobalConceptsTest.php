@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Domain\Payroll\Engine\ExpressionEvaluator;
 use App\Livewire\Concepts\ConceptIndex;
 use App\Models\PayrollConcept;
 use App\Models\User;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class GlobalConceptsTest extends TestCase
 {
-    #[\PHPUnit\Framework\Attributes\Test]
+    #[Test]
     public function global_concepts_page_can_be_rendered(): void
     {
         $user = User::first();
@@ -22,7 +22,7 @@ class GlobalConceptsTest extends TestCase
         $response->assertSee('Catálogo Global de Conceptos');
     }
 
-    #[\PHPUnit\Framework\Attributes\Test]
+    #[Test]
     public function concept_index_component_lists_global_concepts(): void
     {
         $user = User::first();
@@ -38,7 +38,7 @@ class GlobalConceptsTest extends TestCase
             ->assertSee('400');
     }
 
-    #[\PHPUnit\Framework\Attributes\Test]
+    #[Test]
     public function concept_can_be_created_and_applies_globally(): void
     {
         $user = User::first();
@@ -62,7 +62,7 @@ class GlobalConceptsTest extends TestCase
         $this->assertTrue($concept->is_global);
     }
 
-    #[\PHPUnit\Framework\Attributes\Test]
+    #[Test]
     public function formula_tester_evaluates_exact_amount(): void
     {
         $user = User::first();

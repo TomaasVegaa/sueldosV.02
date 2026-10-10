@@ -18,35 +18,56 @@ class AgreementIndex extends Component
     use AuthorizesPermissions;
 
     public ?int $selectedAgreementId = null;
+
     public string $search = '';
+
     public string $activeTab = 'CATEGORIES'; // 'CATEGORIES' | 'CONCEPTS'
 
     // Modal state for Category
     public bool $showCategoryModal = false;
+
     public ?int $editingCategoryId = null;
+
     public string $category_code = '';
+
     public string $category_name = '';
+
     public string $condition = 'M';
+
     public string $basic_salary = '';
+
     public string $non_taxable_salary = '';
+
     public string $effective_from = '';
+
     public string $notes = '';
 
     // Modal state for Concept
     public bool $showConceptModal = false;
+
     public ?int $editingConceptId = null;
+
     public string $concept_code = '';
+
     public string $concept_name = '';
+
     public string $concept_type = 'REMUNERATIVO';
+
     public string $concept_formula = 'SB';
+
     public string $concept_calculation_mode = 'FORMULA';
+
     public string $concept_arca_lsd_code = '';
+
     public bool $concept_print_on_receipt = true;
 
     // Modal state for Agreement
     public bool $showAgreementModal = false;
+
     public string $new_agreement_code = '';
+
     public string $new_agreement_name = '';
+
     public string $new_agreement_description = '';
 
     public function mount(): void
@@ -78,7 +99,7 @@ class AgreementIndex extends Component
         $this->authorizeGlobalPermission('agreements.manage');
         $this->reset([
             'editingCategoryId', 'category_code', 'category_name',
-            'basic_salary', 'non_taxable_salary', 'notes'
+            'basic_salary', 'non_taxable_salary', 'notes',
         ]);
         $this->condition = 'M';
         $this->effective_from = now()->toDateString();
@@ -129,7 +150,7 @@ class AgreementIndex extends Component
                 'agreement_category_id' => $cat->id,
                 'effective_from' => $this->effective_from,
                 'basic_salary' => $this->basic_salary,
-                'non_taxable_salary' => !empty($this->non_taxable_salary) ? $this->non_taxable_salary : 0,
+                'non_taxable_salary' => ! empty($this->non_taxable_salary) ? $this->non_taxable_salary : 0,
                 'notes' => $this->notes,
                 'created_by' => Auth::id(),
             ]);
@@ -144,6 +165,7 @@ class AgreementIndex extends Component
         } else {
             if (AgreementCategory::where('agreement_id', $this->selectedAgreementId)->where('code', $this->category_code)->exists()) {
                 $this->addError('category_code', 'Ya existe una categoría con este código en el convenio seleccionado.');
+
                 return;
             }
 
@@ -159,7 +181,7 @@ class AgreementIndex extends Component
                 'agreement_category_id' => $cat->id,
                 'effective_from' => $this->effective_from,
                 'basic_salary' => $this->basic_salary,
-                'non_taxable_salary' => !empty($this->non_taxable_salary) ? $this->non_taxable_salary : 0,
+                'non_taxable_salary' => ! empty($this->non_taxable_salary) ? $this->non_taxable_salary : 0,
                 'notes' => $this->notes,
                 'created_by' => Auth::id(),
             ]);
@@ -183,7 +205,7 @@ class AgreementIndex extends Component
         $this->authorizeGlobalPermission('agreements.manage');
         $this->reset([
             'editingConceptId', 'concept_code', 'concept_name',
-            'concept_arca_lsd_code'
+            'concept_arca_lsd_code',
         ]);
         $this->concept_type = 'REMUNERATIVO';
         $this->concept_formula = 'SB';
@@ -227,7 +249,8 @@ class AgreementIndex extends Component
         try {
             Parser::parseString($this->concept_formula);
         } catch (Exception $e) {
-            $this->addError('concept_formula', 'Fórmula no válida: ' . $e->getMessage());
+            $this->addError('concept_formula', 'Fórmula no válida: '.$e->getMessage());
+
             return;
         }
 
@@ -248,6 +271,7 @@ class AgreementIndex extends Component
         } else {
             if (PayrollConcept::global()->where('code', $this->concept_code)->exists()) {
                 $this->addError('concept_code', 'Ya existe un concepto global con este código en el estudio.');
+
                 return;
             }
 
@@ -313,16 +337,16 @@ class AgreementIndex extends Component
 
         $conceptsQuery = PayrollConcept::global();
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $categoriesQuery->where(function ($q) {
                 $q->where('code', 'like', "%{$this->search}%")
-                  ->orWhere('name', 'like', "%{$this->search}%");
+                    ->orWhere('name', 'like', "%{$this->search}%");
             });
 
             $conceptsQuery->where(function ($q) {
                 $q->where('code', 'like', "%{$this->search}%")
-                  ->orWhere('name', 'like', "%{$this->search}%")
-                  ->orWhere('formula', 'like', "%{$this->search}%");
+                    ->orWhere('name', 'like', "%{$this->search}%")
+                    ->orWhere('formula', 'like', "%{$this->search}%");
             });
         }
 

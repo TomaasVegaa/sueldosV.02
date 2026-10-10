@@ -34,11 +34,12 @@ class AgreementCategory extends Model
     public function currentScale(): HasOne
     {
         $today = now()->toDateString();
+
         return $this->hasOne(CategoryScaleVersion::class)
             ->where('effective_from', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereNull('effective_to')
-                  ->orWhere('effective_to', '>=', $today);
+                    ->orWhere('effective_to', '>=', $today);
             })
             ->latestOfMany('effective_from');
     }
@@ -54,7 +55,7 @@ class AgreementCategory extends Model
             ->where('effective_from', '<=', $date)
             ->where(function ($q) use ($date) {
                 $q->whereNull('effective_to')
-                  ->orWhere('effective_to', '>=', $date);
+                    ->orWhere('effective_to', '>=', $date);
             })
             ->first();
     }

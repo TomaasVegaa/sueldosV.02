@@ -7,7 +7,9 @@ use InvalidArgumentException;
 class Lexer
 {
     protected string $input;
+
     protected int $length;
+
     protected int $cursor = 0;
 
     public function __construct(string $input)
@@ -31,6 +33,7 @@ class Lexer
             // Ignore whitespace
             if (ctype_space($char)) {
                 $this->cursor++;
+
                 continue;
             }
 
@@ -43,7 +46,7 @@ class Lexer
                     $c = $this->input[$this->cursor];
                     if (ctype_digit($c)) {
                         $this->cursor++;
-                    } elseif ($c === '.' && !$hasDot) {
+                    } elseif ($c === '.' && ! $hasDot) {
                         $hasDot = true;
                         $this->cursor++;
                     } else {
@@ -53,6 +56,7 @@ class Lexer
 
                 $value = substr($this->input, $start, $this->cursor - $start);
                 $tokens[] = new Token(Token::T_NUMBER, $value, $start);
+
                 continue;
             }
 
@@ -66,6 +70,7 @@ class Lexer
 
                 $value = strtoupper(substr($this->input, $start, $this->cursor - $start));
                 $tokens[] = new Token(Token::T_IDENTIFIER, $value, $start);
+
                 continue;
             }
 
@@ -102,6 +107,7 @@ class Lexer
         }
 
         $tokens[] = new Token(Token::T_EOF, '', $this->cursor);
+
         return $tokens;
     }
 }
