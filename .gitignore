@@ -37,3 +37,4 @@ Thumbs.db
 # Artefactos privados generados por la aplicación.
 /storage/app/private/*
 !/storage/app/private/.gitignore
+/scratch/
